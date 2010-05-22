@@ -1,0 +1,92 @@
+---
+name: FusqlFS
+version: 0.001
+author:
+  - 'Konstantin Stepanov <kstep@p-nut.info>'
+abstract: 'fusqlfs - FUSE file system to mount DB and provide tools to control and admin it'
+license: gpl3
+resources:
+  license: http://opensource.org/licenses/gpl-3.0.html
+build_requires:
+  Test::More: 0
+requires:
+  Carp: 0
+  DBD::Pg: 0
+  DBI: 1.600
+  Fcntl: 0
+  Fuse: 0.09
+  Getopt::Long: 0
+  POSIX: 0
+  Pod::Usage: 0
+  YAML::Tiny: 0
+  perl: 5.010
+recommends:
+  DBD::mysql: 0
+  JSON::Syck: 0
+  XML::Simple: 0
+configure_requires:
+  Module::Build: 0.340201
+provides:
+  FusqlFS:
+    file: lib/FusqlFS.pm
+    version: 0.001
+  FusqlFS::Backend:
+    file: lib/FusqlFS/Backend.pm
+  FusqlFS::Backend::Base:
+    file: lib/FusqlFS/Backend/Base.pm
+  FusqlFS::Backend::PgSQL:
+    file: lib/FusqlFS/Backend/PgSQL.pm
+  FusqlFS::Backend::PgSQL::Functions:
+    file: lib/FusqlFS/Backend/PgSQL/Functions.pm
+  FusqlFS::Backend::PgSQL::Queries:
+    file: lib/FusqlFS/Backend/PgSQL/Queries.pm
+  FusqlFS::Backend::PgSQL::Role::Owned:
+    file: lib/FusqlFS/Backend/PgSQL/Roles.pm
+  FusqlFS::Backend::PgSQL::Role::Owner:
+    file: lib/FusqlFS/Backend/PgSQL/Roles.pm
+  FusqlFS::Backend::PgSQL::Role::Permissions:
+    file: lib/FusqlFS/Backend/PgSQL/Roles.pm
+  FusqlFS::Backend::PgSQL::Roles:
+    file: lib/FusqlFS/Backend/PgSQL/Roles.pm
+  FusqlFS::Backend::PgSQL::Sequences:
+    file: lib/FusqlFS/Backend/PgSQL/Sequences.pm
+  FusqlFS::Backend::PgSQL::Table::Constraints:
+    file: lib/FusqlFS/Backend/PgSQL/Table/Constraints.pm
+  FusqlFS::Backend::PgSQL::Table::Data:
+    file: lib/FusqlFS/Backend/PgSQL/Table/Data.pm
+  FusqlFS::Backend::PgSQL::Table::Indices:
+    file: lib/FusqlFS/Backend/PgSQL/Table/Indices.pm
+  FusqlFS::Backend::PgSQL::Table::Struct:
+    file: lib/FusqlFS/Backend/PgSQL/Table/Struct.pm
+  FusqlFS::Backend::PgSQL::Tables:
+    file: lib/FusqlFS/Backend/PgSQL/Tables.pm
+  FusqlFS::Backend::PgSQL::Views:
+    file: lib/FusqlFS/Backend/PgSQL/Views.pm
+  FusqlFS::Cache:
+    file: lib/FusqlFS/Cache.pm
+  FusqlFS::Cache::Base:
+    file: lib/FusqlFS/Cache/Base.pm
+  FusqlFS::Cache::File:
+    file: lib/FusqlFS/Cache/File.pm
+  FusqlFS::Cache::File::Record:
+    file: lib/FusqlFS/Cache/File.pm
+  FusqlFS::Cache::Limited:
+    file: lib/FusqlFS/Cache/Limited.pm
+  FusqlFS::Entry:
+    file: lib/FusqlFS/Entry.pm
+  FusqlFS::Entry::Dir:
+    file: lib/FusqlFS/Entry.pm
+  FusqlFS::Entry::File:
+    file: lib/FusqlFS/Entry.pm
+  FusqlFS::Entry::Pipe:
+    file: lib/FusqlFS/Entry.pm
+  FusqlFS::Entry::Symlink:
+    file: lib/FusqlFS/Entry.pm
+  FusqlFS::Interface:
+    file: lib/FusqlFS/Interface.pm
+  MySQL::Backend::Base:
+    file: lib/FusqlFS/Backend/MySQL.pm
+generated_by: Module::Build version 0.340201
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
