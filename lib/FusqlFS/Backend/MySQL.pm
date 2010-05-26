@@ -1,10 +1,8 @@
 use strict;
 use v5.10.0;
 
-use FusqlFS::Backend::Base;
-
-package MySQL::Backend::Base;
-use base 'FusqlFS::Backend::Base';
+package FusqlFS::Backend::MySQL;
+use parent 'FusqlFS::Backend::Base';
 
 sub dsn
 {

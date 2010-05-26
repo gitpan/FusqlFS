@@ -9,6 +9,61 @@ my $class = Module::Build->subclass(
     class => 'FusqlFS::Builder',
     code  => q{
         eval 'use Module::Build::Debian';
+
+        sub ACTION_buildtests
+        {
+            use Test::Inline;
+            my $tests = Test::Inline->new(
+                verbose     => 1,
+                readonly    => 0,
+                check_count => 2,
+                input       => 'lib',
+                output      => 't',
+                manifest    => 't/manifest',
+                file_content => sub () {
+                    my ($inline, $script) = @_;
+                    my $testno = $script->tests;
+                    my $plan = $testno? "plan tests => $testno;": "plan 'no_plan';";
+                    my $content = $script->merged_content;
+                    my $class = $script->class;
+                    my $testclass = '';
+                    my $require = $class;
+                    my $instantiate = 1;
+
+                    $testclass = $1 if ($content =~ /^#!class (\S+)/m);
+                    $require = $1 if ($content =~ /^#!req (\S+)/m);
+                    $require = '' if ($content =~ /^#!noreq/m);
+                    $instantiate = 0 if ($content =~ /^#!noinst/m);
+
+                    my $result = "use strict;\nuse v5.10.0;\n";
+                    $result .= "use Test::More;\n";
+                    if ($testclass)
+                    {
+                        $result .= "use $testclass;\n";
+                        $result .= "if ($testclass->can('set_up'))\n{ plan skip_all => 'Initialization failed' unless $testclass->set_up(); }\n";
+                    }
+                    $result .= "$plan\n\n";
+                    if ($require)
+                    {
+                        $result .= "require_ok '$require';\n";
+                    }
+                    if ($instantiate)
+                    {
+                        $result .= "our \$_tobj = $class->new();\n";
+                        $result .= "isa_ok \$_tobj, '$class', 'Class $class instantiated';\n\n";
+                    }
+                    $result .= $script->merged_content;
+                    if ($testclass)
+                    {
+                        $result .= "\n$testclass->tear_down() if $testclass->can('tear_down');\n";
+                    }
+                    $result .= "\n1;";
+                    return $result;
+                },
+            );
+            $tests->add_all;
+            $tests->save;
+        }
     },
 );
 
@@ -35,6 +90,8 @@ my $build = $class->new(
     },
     build_requires => {
         'Test::More'   => 0,
+        'Test::Inline' => 0,
+        'B::Lint'      => 0,
     },
     recommends => {
         'DBD::mysql'   => 0,

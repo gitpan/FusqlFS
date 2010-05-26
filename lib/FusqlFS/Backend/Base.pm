@@ -1,25 +1,23 @@
 use strict;
 use v5.10.0;
 
-use FusqlFS::Interface;
-
 package FusqlFS::Backend::Base;
-use base 'FusqlFS::Interface';
+use parent 'FusqlFS::Artifact';
 
 use DBI;
 use FusqlFS::Entry;
 
 sub new
 {
-    return $FusqlFS::Interface::instance if $FusqlFS::Interface::instance;
+    return $FusqlFS::Artifact::instance if $FusqlFS::Artifact::instance;
 
     my $class = shift;
     my %options = @_;
     my $dsn = 'DBI:'.$class->dsn(@options{qw(host port database)});
     my $self = {
         subpackages => {},
-        limit  => 0 + $options{limit},
-        dbh => DBI->connect($dsn, @options{qw(user password)}),
+        limit  => 0 + ($options{limit}||0),
+        dbh => DBI->connect($dsn, @options{qw(user password)}, { PrintError => $options{debug}||0, PrintWarn => $options{debug}||0 }),
     };
 
     given ($options{format})
@@ -52,7 +50,7 @@ sub new
 
     bless $self, $class;
 
-    $FusqlFS::Interface::instance = $self;
+    $FusqlFS::Artifact::instance = $self;
     $self->init();
     return $self;
 }
@@ -62,6 +60,14 @@ sub by_path
     return FusqlFS::Entry->new(@_);
 }
 
+=begin testing dsn
+
+#!noinst
+
+is FusqlFS::Backend::Base->dsn('host', 'port', 'database'), 'host=host;port=port;database=database;', 'FusqlFS::Backend::Base->dsn is sane';
+
+=end testing
+=cut
 sub dsn
 {
     my $dsn = "";
@@ -79,7 +85,11 @@ sub init
 
 sub destroy
 {
-    undef $FusqlFS::Interface::instance;
+    if ($FusqlFS::Abstract::instance)
+    {
+        $FusqlFS::Abstract::instance->disconnect;
+        undef $FusqlFS::Abstract::instance;
+    }
 }
 
 1;

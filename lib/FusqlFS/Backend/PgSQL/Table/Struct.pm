@@ -1,10 +1,8 @@
 use strict;
 use v5.10.0;
 
-use FusqlFS::Interface;
-
 package FusqlFS::Backend::PgSQL::Table::Struct;
-use base 'FusqlFS::Interface';
+use parent 'FusqlFS::Artifact';
 
 sub new
 {
@@ -29,7 +27,7 @@ sub new
     $self->{create_expr} = 'ALTER TABLE "%s" ADD COLUMN "%s" INTEGER NOT NULL DEFAULT \'0\'';
     $self->{rename_expr} = 'ALTER TABLE "%s" RENAME COLUMN "%s" TO "%s"';
 
-    $self->{store_default_expr} = 'ALTER TABLE "%s" ALTER COLUMN "%s" SET DEFAULT ?';
+    $self->{store_default_expr} = 'ALTER TABLE "%s" ALTER COLUMN "%s" SET DEFAULT %s';
     $self->{drop_default_expr} = 'ALTER TABLE "%s" ALTER COLUMN "%s" DROP DEFAULT';
     $self->{set_nullable_expr} = 'ALTER TABLE "%s" ALTER COLUMN "%s" DROP NOT NULL';
     $self->{drop_nullable_expr} = 'ALTER TABLE "%s" ALTER COLUMN "%s" SET NOT NULL';
@@ -37,13 +35,35 @@ sub new
     bless $self, $class;
 }
 
+=begin testing list
+
+is $_tobj->list('unknown'), undef;
+list_ok $_tobj->list('fusqlfs_table'), [ 'id' ];
+
+=end testing
+=cut
 sub list
 {
     my $self = shift;
     my ($table) = @_;
-    return $self->all_col($self->{list_expr}, $table);
+    my $list = $self->all_col($self->{list_expr}, $table);
+    return unless @$list;
+    return $list;
 }
 
+=begin testing get
+
+is $_tobj->get('fusqlfs_table', 'unknown'), undef;
+is $_tobj->get('fusqlfs_table', 'id'), q{---
+default: "nextval('fusqlfs_table_id_seq'::regclass)"
+dimensions: 0
+nullable: 0
+order: 1
+type: integer
+};
+
+=end testing
+=cut
 sub get
 {
     my $self = shift;
@@ -52,6 +72,14 @@ sub get
     return $self->dump($result);
 }
 
+=begin testing drop after rename
+
+isnt $_tobj->drop('fusqlfs_table', 'new_field'), undef;
+is $_tobj->get('fusqlfs_table', 'new_field'), undef;
+is_deeply $_tobj->list('fusqlfs_table'), [ 'id', '........pg.dropped.2........' ];
+
+=end testing
+=cut
 sub drop
 {
     my $self = shift;
@@ -59,6 +87,20 @@ sub drop
     $self->do($self->{drop_expr}, [$table, $name]);
 }
 
+=begin testing create after get list
+
+isnt $_tobj->create('fusqlfs_table', 'field'), undef;
+is_deeply $_tobj->list('fusqlfs_table'), [ 'id', 'field' ];
+is $_tobj->get('fusqlfs_table', 'field'), q{---
+default: 0
+dimensions: 0
+nullable: 0
+order: 2
+type: integer
+};
+
+=end testing
+=cut
 sub create
 {
     my $self = shift;
@@ -66,6 +108,15 @@ sub create
     $self->do($self->{create_expr}, [$table, $name]);
 }
 
+=begin testing rename after store
+
+isnt $_tobj->rename('fusqlfs_table', 'field', 'new_field'), undef;
+is_deeply $_tobj->list('fusqlfs_table'), [ 'id', 'new_field' ];
+is $_tobj->get('fusqlfs_table', 'field'), undef;
+is $_tobj->get('fusqlfs_table', 'new_field'), $new_field;
+
+=end testing
+=cut
 sub rename
 {
     my $self = shift;
@@ -73,6 +124,13 @@ sub rename
     $self->do($self->{rename_expr}, [$table, $name, $newname]);
 }
 
+=begin testing store after create
+
+isnt $_tobj->store('fusqlfs_table', 'field', $new_field), undef;
+is $_tobj->get('fusqlfs_table', 'field'), $new_field;
+
+=end testing
+=cut
 sub store
 {
     my $self = shift;
@@ -86,14 +144,32 @@ sub store
     my $using = $data->{'using'} || undef;
     $newtype .= " USING $using" if $using;
 
+    $self->do($self->{store_type_expr}, [$table, $name, $newtype]);
+
     if (defined $data->{'default'}) {
-        $self->do($self->{store_default_expr}, [$table, $name], $data->{'default'});
+        $self->do($self->{store_default_expr}, [$table, $name, $data->{'default'}]);
     } else {
         $self->do($self->{drop_default_expr}, [$table, $name]);
     }
     $self->do($self->{$data->{'nullable'}? 'set_nullable_expr': 'drop_nullable_expr'}, [$table, $name]);
-    $self->do($self->{store_type_expr}, [$table, $name, $newtype]);
+    return 1;
 }
 
 1;
 
+__END__
+
+=begin testing SETUP
+
+#!class FusqlFS::Backend::PgSQL::Table::Test
+
+my $new_field = q{---
+default: "''::character varying"
+dimensions: 0
+nullable: 1
+order: 2
+type: 'character varying(255)'
+};
+
+=end testing
+=cut

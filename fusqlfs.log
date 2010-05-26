@@ -1,0 +1,3 @@
+DBD::Pg::db selectcol_arrayref failed: ERROR:  syntax error at or near "FROM"
+СТРОКА 1:SELECT  FROM "test" LIMIT 100
+                 ^ at /usr/share/perl5/FusqlFS/Interface.pm line 55.

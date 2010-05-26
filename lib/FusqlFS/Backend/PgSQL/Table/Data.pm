@@ -1,10 +1,8 @@
 use strict;
 use v5.10.0;
 
-use FusqlFS::Interface;
-
 package FusqlFS::Backend::PgSQL::Table::Data;
-use base 'FusqlFS::Interface';
+use parent 'FusqlFS::Artifact';
 
 use FusqlFS::Backend::PgSQL::Table::Struct;
 
@@ -21,13 +19,19 @@ sub new
     bless $self, $class;
 }
 
+=begin testing list
+
+list_ok $_tobj->list('fusqlfs_table'), [];
+
+=end testing
+=cut
 sub list
 {
     my $self = shift;
     my ($table) = @_;
     my $primary_key = join " || '.' || ", $self->get_primary_key($table);
     my $sth = $self->cexpr('SELECT %s FROM "%s" %s', $primary_key, $table, $self->limit());
-    return $self->all_col($sth);
+    return $self->all_col($sth)||[];
 }
 
 sub where_clause
@@ -40,6 +44,12 @@ sub where_clause
     return join(' AND ', map { "\"$_\" = ?" } @primary_key), @binds;
 }
 
+=begin testing get
+
+is $_tobj->get('fusqlfs_table', '1'), undef;
+
+=end testing
+=cut
 sub get
 {
     my $self = shift;
@@ -54,6 +64,14 @@ sub get
     return $self->dump($sth->fetchrow_hashref) if $sth->execute(@binds);
 }
 
+=begin testing drop after rename
+
+isnt $_tobj->drop('fusqlfs_table', '2'), undef;
+is $_tobj->get('fusqlfs_table', '2'), undef;
+is_deeply $_tobj->list('fusqlfs_table'), [];
+
+=end testing
+=cut
 sub drop
 {
     my $self = shift;
@@ -76,6 +94,16 @@ sub store
     $self->cdo('UPDATE "%s" SET %s WHERE %s', [$table, $template, $where_clause], values %$data, @binds);
 }
 
+=begin testing create after get list
+
+ok $_tobj->create('fusqlfs_table', '1');
+is $_tobj->get('fusqlfs_table', '1'), q{---
+id: 1
+};
+is_deeply $_tobj->list('fusqlfs_table'), [ 1 ];
+
+=end testing
+=cut
 sub create
 {
     my $self = shift;
@@ -86,6 +114,17 @@ sub create
     $self->cdo('INSERT INTO "%s" (%s) VALUES (%s)', [$table, join(', ', @primary_key), $pholders], split(/[.]/, $name));
 }
 
+=begin testing rename after create
+
+isnt $_tobj->rename('fusqlfs_table', '1', '2'), undef;
+is $_tobj->get('fusqlfs_table', '1'), undef;
+is $_tobj->get('fusqlfs_table', '2'), q{---
+id: 2
+};
+is_deeply $_tobj->list('fusqlfs_table'), [ 2 ];
+
+=end testing
+=cut
 sub rename
 {
     my $self = shift;
@@ -111,3 +150,10 @@ sub get_primary_key
 
 1;
 
+__END__
+
+=begin testing SETUP
+
+#!class FusqlFS::Backend::PgSQL::Table::Test
+
+=end testing

@@ -1,15 +1,35 @@
 use strict;
 use v5.10.0;
-use FusqlFS::Backend::Base;
+
+package FusqlFS::Backend::PgSQL;
+use parent 'FusqlFS::Backend::Base';
+
 use FusqlFS::Backend::PgSQL::Tables;
 use FusqlFS::Backend::PgSQL::Views;
 use FusqlFS::Backend::PgSQL::Sequences;
 use FusqlFS::Backend::PgSQL::Roles;
 use FusqlFS::Backend::PgSQL::Queries;
 
-package FusqlFS::Backend::PgSQL;
-use base 'FusqlFS::Backend::Base';
+=begin testing
 
+#!class FusqlFS::Backend::PgSQL::Test
+#!noinst
+
+my $fusqlh = FusqlFS::Backend::PgSQL->new(
+    host     => '',
+    port     => '',
+    database => 'fusqlfs_test',
+    user     => 'postgres',
+    password => ''
+);
+
+isa_ok $fusqlh, 'FusqlFS::Backend::PgSQL', 'PgSQL backend initialization';
+
+my $new_fusqlh = FusqlFS::Backend::PgSQL->new();
+is $new_fusqlh, $fusqlh, 'PgSQL backend is singleton';
+
+=end testing
+=cut
 sub init
 {
     $_[0]->{subpackages} = {

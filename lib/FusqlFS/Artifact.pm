@@ -1,10 +1,24 @@
 use strict;
 use v5.10.0;
 
-package FusqlFS::Interface;
+package FusqlFS::Artifact;
 
 our $instance;
 
+=begin testing Artifact
+
+#!noinst
+
+isa_ok FusqlFS::Artifact->new(), 'FusqlFS::Artifact';
+is FusqlFS::Artifact->get(), '';
+is FusqlFS::Artifact->list(), undef;
+foreach my $method (qw(rename drop create store))
+{
+    is FusqlFS::Artifact->$method(), 1;
+}
+
+=end testing
+=cut
 sub new { bless {}, $_[0] }
 sub get { return '' }
 sub list { return }
@@ -64,6 +78,7 @@ sub all_row
 
 sub load
 {
+    return $_[1] if ref $_[1];
     return $instance->{loader}->($_[1]);
 }
 
@@ -76,7 +91,7 @@ sub dump
 sub limit
 {
     my $limit = $instance->{limit};
-    return "LIMIT $limit" if $limit;
+    return $limit? "LIMIT $limit": '';
 }
 
 sub build
@@ -88,7 +103,7 @@ sub build
         local $_ = $_;
         next unless (@bind) = ($filter->());
         $sql .= shift @bind;
-        push @binds, [ @bind ];
+        push @binds, [ @bind ] if @bind;
     }
     $sql = $instance->{dbh}->prepare($sql);
     $sql->bind_param($_+1, @{$binds[$_]}) foreach (0..$#binds);

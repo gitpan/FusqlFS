@@ -1,7 +1,9 @@
 bin/fusqlfs
 Build.PL
-findreqs.pl
+fusqlfs.log
 lib/FusqlFS.pm
+lib/FusqlFS/Artifact.pm
+lib/FusqlFS/Artifact/Table/Lazy.pm
 lib/FusqlFS/Backend.pm
 lib/FusqlFS/Backend/Base.pm
 lib/FusqlFS/Backend/MySQL.pm
@@ -14,16 +16,18 @@ lib/FusqlFS/Backend/PgSQL/Table/Constraints.pm
 lib/FusqlFS/Backend/PgSQL/Table/Data.pm
 lib/FusqlFS/Backend/PgSQL/Table/Indices.pm
 lib/FusqlFS/Backend/PgSQL/Table/Struct.pm
+lib/FusqlFS/Backend/PgSQL/Table/Test.pm
 lib/FusqlFS/Backend/PgSQL/Tables.pm
+lib/FusqlFS/Backend/PgSQL/Test.pm
 lib/FusqlFS/Backend/PgSQL/Views.pm
 lib/FusqlFS/Cache.pm
 lib/FusqlFS/Cache/Base.pm
 lib/FusqlFS/Cache/File.pm
 lib/FusqlFS/Cache/Limited.pm
 lib/FusqlFS/Entry.pm
-lib/FusqlFS/Interface.pm
 LICENSE
 MANIFEST			This list of files
 MANIFEST.SKIP
 README.pod
+t/00_env_is_sane.t
 META.yml

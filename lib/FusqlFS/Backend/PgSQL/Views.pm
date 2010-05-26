@@ -1,9 +1,8 @@
 use strict;
 use v5.10.0;
-use FusqlFS::Interface;
 
 package FusqlFS::Backend::PgSQL::Views;
-use base 'FusqlFS::Interface';
+use parent 'FusqlFS::Artifact';
 use FusqlFS::Backend::PgSQL::Roles;
 
 sub new
@@ -24,23 +23,45 @@ sub new
     bless $self, $class;
 }
 
+=begin testing list
+
+list_ok $_tobj->list(), [];
+
+=end testing
+=cut
 sub list
 {
     my $self = shift;
     return $self->all_col($self->{list_expr});
 }
 
+=begin testing get
+
+is $_tobj->get('unknown'), undef;
+
+=end testing
+=cut
 sub get
 {
     my $self = shift;
     my ($name) = @_;
     my $result = $self->all_col($self->{get_expr}, $name);
+    return unless @$result;
     return {
         'query.sql' => $result->[0],
         owner => $self->{owner},
     };
 }
 
+=begin testing rename after store
+
+isnt $_tobj->rename('fusqlfs_view', 'new_fusqlfs_view'), undef;
+is $_tobj->get('fusqlfs_view'), undef;
+is_deeply $_tobj->get('new_fusqlfs_view'), { 'query.sql' => 'SELECT 2;', owner => $_tobj->{owner} };
+is_deeply $_tobj->list(), [ 'new_fusqlfs_view' ];
+
+=end testing
+=cut
 sub rename
 {
     my $self = shift;
@@ -48,6 +69,14 @@ sub rename
     $self->do($self->{'rename_expr'}, [$name, $newname]);
 }
 
+=begin testing drop after rename
+
+isnt $_tobj->drop('new_fusqlfs_view'), undef;
+is_deeply $_tobj->list(), [];
+is $_tobj->get('new_fusqlfs_view'), undef;
+
+=end testing
+=cut
 sub drop
 {
     my $self = shift;
@@ -55,6 +84,14 @@ sub drop
     $self->do($self->{'drop_expr'}, [$name]);
 }
 
+=begin testing create after get list
+
+isnt $_tobj->create('fusqlfs_view'), undef;
+is_deeply $_tobj->list(), [ 'fusqlfs_view' ];
+is_deeply $_tobj->get('fusqlfs_view'), { 'query.sql' => 'SELECT 1;', owner => $_tobj->{owner} };
+
+=end testing
+=cut
 sub create
 {
     my $self = shift;
@@ -62,6 +99,13 @@ sub create
     $self->do($self->{'create_expr'}, [$name]);
 }
 
+=begin testing store after create
+
+isnt $_tobj->store('fusqlfs_view', { 'query.sql' => 'SELECT 2' }), undef;
+is_deeply $_tobj->get('fusqlfs_view'), { 'query.sql' => 'SELECT 2;', owner => $_tobj->{owner} };
+
+=end testing
+=cut
 sub store
 {
     my $self = shift;
@@ -71,3 +115,10 @@ sub store
 
 1;
 
+__END__
+
+=begin testing SETUP
+
+#!class FusqlFS::Backend::PgSQL::Test
+
+=end testing
