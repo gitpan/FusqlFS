@@ -24,11 +24,26 @@ my $class = Module::Build->subclass(
                     my ($inline, $script) = @_;
                     my $testno = $script->tests;
                     my $plan = $testno? "plan tests => $testno;": "plan 'no_plan';";
-                    my $content = $script->merged_content;
                     my $class = $script->class;
                     my $testclass = '';
                     my $require = $class;
                     my $instantiate = 1;
+
+                    #my $content = $script->merged_content;
+                    my $content = join "\n", map { $_->content; } $script->setup;
+                    my $sorted = $script->sorted;
+                    if ($sorted)
+                    {
+                        $content .= join "\n", map { $_->setup? '': '
+#'.$_->begin.'
+{
+my $_tname = \''.$_->name.'\';
+my $_tcount = '.($_->tests? $_->tests: 'undef').';
+
+'.$_->content.'}
+'
+                        } @$sorted;
+                    }
 
                     $testclass = $1 if ($content =~ /^#!class (\S+)/m);
                     $require = $1 if ($content =~ /^#!req (\S+)/m);
@@ -52,7 +67,9 @@ my $class = Module::Build->subclass(
                         $result .= "our \$_tobj = $class->new();\n";
                         $result .= "isa_ok \$_tobj, '$class', 'Class $class instantiated';\n\n";
                     }
-                    $result .= $script->merged_content;
+                    $content =~ s/{_tpkg}/$class/g;
+                    $result .= "our \$_tcls = '$class';\n";
+                    $result .= $content;
                     if ($testclass)
                     {
                         $result .= "\n$testclass->tear_down() if $testclass->can('tear_down');\n";
@@ -78,6 +95,7 @@ my $build = $class->new(
         'Getopt::Long' => 0,
         'Pod::Usage'   => 0,
         'Carp'         => 0,
+        'Cwd'          => 0,
 
         'DBI'          => '1.600',
         'DBD::Pg'      => 0,

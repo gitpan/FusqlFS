@@ -1,6 +1,6 @@
 ---
 name: FusqlFS
-version: 0.002
+version: 0.0021
 author:
   - 'Konstantin Stepanov <kstep@p-nut.info>'
 abstract: 'fusqlfs - FUSE file system to mount DB and provide tools to control and admin it'
@@ -13,6 +13,7 @@ build_requires:
   Test::More: 0
 requires:
   Carp: 0
+  Cwd: 0
   DBD::Pg: 0
   DBI: 1.600
   Fcntl: 0
@@ -31,7 +32,7 @@ configure_requires:
 provides:
   FusqlFS:
     file: lib/FusqlFS.pm
-    version: 0.002
+    version: 0.0021
   FusqlFS::Artifact:
     file: lib/FusqlFS/Artifact.pm
   FusqlFS::Artifact::Table::Lazy:

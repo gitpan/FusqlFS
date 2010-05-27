@@ -1,10 +1,12 @@
 #!/usr/bin/perl
 
 use strict;
+use v5.10.0;
 
 use Getopt::Long;
 use Pod::Usage;
 use Carp;
+use Cwd;
 
 use POSIX qw(locale_h setsid);
 use FusqlFS;
@@ -39,6 +41,7 @@ my %options = (
     'cache_threshold' => 0,
 );
 
+Getopt::Long::Configure('no_ignore_case');
 GetOptions(
     'host|h:s'        => \$options{'host'},
     'port|P:i'        => \$options{'port'},
@@ -60,8 +63,8 @@ GetOptions(
     'format|f:s'      => \$options{'format'},
 ) or pod2usage(2);
 
-$options{'database'} ||= $ARGV[0];
-$options{'mountpoint'} ||= $ARGV[1];
+$options{'database'} ||= shift @ARGV;
+$options{'mountpoint'} ||= shift @ARGV;
 
 pod2usage(1) unless !$options{'help'} && $options{'database'} && $options{'mountpoint'};
 
@@ -69,6 +72,8 @@ pod2usage(1) unless !$options{'help'} && $options{'database'} && $options{'mount
 #	use threads;
 #	use threads::shared;
 #}
+
+$options{'mountpoint'} = getcwd().'/'.$options{'mountpoint'} unless $options{'mountpoint'} =~ m{^/};
 
 daemonize($options{'logfile'}) if $options{'daemon'};
 
