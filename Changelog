@@ -1,0 +1,316 @@
+
+Changed in v0.001:
+
+Konstantin Stepanov (189):
+      spelling: indeces -> indices
+      do not export inner fusefs functions
+      added mapping functions to map path to/from object
+      cleaned up basic package to continue
+      FusqlFS::Base module refactored
+      use class variables for cache & DB connection
+      first prototype of package with new interface (for PostgreSQL)
+      prototype refactored: use global connection, added common Interface package
+      prototype: implemented map_path_to_obj($path) function
+      prototype: added Entry package, which parses path and provides interface wrapper around filesystem object
+      proto: rewrote mapping algorithm
+      proto: test code update
+      prototype: implemented basic fusefs interface
+      prototype: getattr returns ENOENT on entry absence
+      prototype: read fuse call implemented
+      prototype: Tables::get() tests if given table exists
+      prototype code moved into mainline code, splitted it into separate modules and cleaned up a little
+      removed prototype code
+      moved engine initialization into separate init() method, new() reserved for class construction in Base::Root class
+      write implemented
+      more robust file existance checks
+      Base::Root::by_path() accepts second parameter: default value
+      symlink implementation (WIP)
+      renamed modules according common rules
+      Entry::flush() flushes if entry is dirty only
+      rewrote MySQL::Base according new interface
+      FusqlFS::Base is a singleton
+      handle arrays as dirs
+      typo fixed
+      FusqlFS::Base::clear_cache() accepts optional arg $deep_clear (defaults to false)
+      Entry::store() supports "indirect" store
+      dbg() rewrote to get data from caller() correctly
+      new FusqlFS::Base::by_path_uncached() to get entry by path without cache checks
+      PgSQL engine: index creation and storing implementation
+      symlinks handling (WIP)
+      FusqlFS::Base::drop() supports indirect drops
+      unlink implemented
+      mkdir & rmdir implemented
+      clear_cache()'s 2nd param is depth to raise up to given path
+      simplified the way of path parsing
+      added Entry::depth() method to get tail's depth
+      PgSQL engine: list uncreated indices as well
+      unified indirect store/drop/create operations
+      mknod implemented
+      rename implemented (WIP)
+      more robust checks in fuse-calls
+      open implemented
+      added Entry::isfile() method to check if the entry is regular file
+      added Entry::height() method to get number of items in @names
+      Entry::tailrel() now accepts two params: entry to modify (must be got from $pkg->get(@names), default to $self->entry()) and $data (defaults to $self->get())
+      Entry::rename() supports indirect rename now
+      rename support
+      fsync support: clears cache
+      clear cache on USR1 signal
+      removed dbg() sub
+      main program cleanup: use Carp and Pod::Usage, converted docs to pod
+      base modules are not writable
+      additional checks for existance & access permissions
+      set directories link count correctly
+      removed spare code
+      added coderef support
+      fixed "statement handle is still Active" warning
+      views module implemented
+      added Entry::name() function to get entry's name in file system
+      moved detailed checks on rename into main interface module, Entry::rename() renamed to Entry::move()
+      added limit option to limit number of table rows to list in tables/*/data dir
+      PgSQL is the default DB engine
+      Documentation updated
+      return undef if object data (row/field) is absent
+      use dot separator in complex /tables/*/data filenames
+      Added some helper function into Interface package
+      refactoring
+      splitted PgSQL module into submodules
+      PgSQL::Sequences module (WIP)
+      added  param into one_row() and all_col()
+      PgSQL::Sequences: check if sequence really exists and get basic sequence info if it is
+      Interface: updated one_row, all_col, do, cdo interface
+      Basic roles module implementation (WIP)
+      go down last package if it's not directory
+      PgSQL::Roles::Owner universal class, used for tables module
+      utime() stub added
+      removed PostgreSQL 8.3 incompatible code
+      better type change handling, added optional using clause
+      PgSQL roles store and rename support
+      pgsql roles drop implemented
+      added cache module: cleanup on cache threshold exceeded  strategy
+      added --maxcached option to enable new cache strategy cleanup
+      docs updated: --db option as --database synonym
+      debug code removed
+      docs update: more accurate cache stats info
+      pgsql roles: grant & revoke roles implemented (roles subdirs now and can link from one to another)
+      pgsql roles: pass additional params to alter role statement more freely
+      pgsql roles: get() returns undef if role is absent
+      pgsql sequences are dirs now
+      renamed desc to struct
+      pgsql sequences: rename and store support implemented
+      pgsql sequences: create and drop support implemented
+      moved all config vars from package level to instance level (dbh, loader, dumper, limit...)
+      new Interface build() method
+      cache system: disabled cleanup counter
+      fixup new Interface build() method
+      removed spare quotes
+      pgsql: views and sequences have owner symlink now, views are tables now as well (select expression is in query.sql file now)
+      fixed incorrect cache cleanup
+      added Makefile with (un/re)mount targets and tests
+      added lint test
+      updated .PHONY target
+      added test target to run all tests
+      added test messages
+      stripped of coderefs support as it will be totally special case
+      reworked cache inheritance and initialization
+      added FusqlFS::Cache::File stub
+      cache: added is_needed() abstract class method used to define if this cache strategy can really be applied with given args
+      cache: implemented filecache functionality
+      added --cache and --cache-limit options, --maxcached deprecated
+      clean-cache target to send -USR1 to all fusqlfs daemons available
+      added test to check if fusqlfs.pl is running
+      makefile: messages
+      makefile: phony target update
+      module file headers standardized
+      moved cache code from Base into FusqlFS module, updated cache options handling in process
+      more checks and error reporting
+      makefile: test if fs is really mounted
+      makefile: configure for file cache testing
+      file cache class works at least
+      gitignore update
+      GPL v3 license added
+      added readme file
+      docs parts about cache updated
+      pod errors fixed
+      unexistant entries are undefined entries, not only false ones
+      Interface::all_row() method to get arrayref of hashrefs with all data from query
+      queries module implemented (WIP)
+      fifo try
+      pseodopipes: mark them as sticky files
+      don't drop dirty data from cache
+      pipe write special case
+      pseudopipes can't be unlinked
+      pseudopipes are normal files with length
+      implemented separate in and out buffers for pseudopipes
+      implemented queries via new pseudopipes interface
+      experiment: reimplemented queries as simple pseudopipes
+      refactored Entry package into subpackages by file type
+      cache queries in Query module manually, not via cexpr
+      PgSQL::Tables package ::get returns 0 on non-existant table
+      don't cache non-existant entries
+      removed debug carps
+      don't allow unlink/rmdir of dir/notdir
+      deeper cache cleanup on mknod call
+      moved Entry code into separate module
+      removed cache code from Base module
+      abstracted entry read with Entry::read() method
+      moved write() & flush() methods into concrete Entry implementations
+      don't you ever write into dir
+      Base::dump() returns undef if no data to dump
+      pipes are files too
+      rewrote queries with new pseudopipes interface
+      moved input buffer logic a level higher into FusqlFS module
+      removed spare returns
+      pseudopipes special handling experiment
+      refactored Entry package into subpackages by file type
+      PgSQL::Tables package ::get returns 0 on non-existant table
+      don't allow unlink/rmdir of dir/notdir
+      deeper cache cleanup on mknod call
+      moved Entry code into separate module
+      removed cache code from Base module
+      abstracted entry read with Entry::read() method
+      moved write() & flush() methods into concrete Entry implementations
+      don't you ever write into dir
+      Base::dump() returns undef if no data to dump
+      moved input buffer logic a level higher into FusqlFS module
+      removed spare returns
+      added --format=[yaml|xml] option
+      NoAttr for XML::Simple parser
+      --format=xml for test into Makefile
+      JSON format support
+      rewrote pseudopipes in a more simple synchronous way
+      less special pseudopipes handling
+      Merge branch 'pipes'
+      documentation formatting update
+      gitignore update: /mnt & /tags
+      PgSQL: basic constraints implementation
+      PgSQL: splitted Tables module into separate modules
+      Restructered sources
+      refactored Cache module
+      added Backend wrapper module
+      don't drop pipes from cache on flush
+      distribution prepared
+      rewrote Makefile to use Module::Build system
+
+
+Changed in v0.002:
+
+Konstantin Stepanov (62):
+      use parent instead of use base, removed spare uses
+      Makefile: installdirs vendor
+      fixed some uninitialized variables errors
+      some fixes in file cache module
+      fixed incorrect Interface::build behavior on empty binds options
+      PgSQL: create role implemented
+      PgSQL: incorrect role save fixed: wrong (inverse) boolean values handling
+      File cache module: exists fix
+      PgSQL::Views: get method returns undef if view doesn't exist
+      PgSQL::Table::Struct: list method returns undef if table doesn't exist
+      PgSQL::Table::Struct: store method: fixed order of modification applies to field definition
+      placed all Makefile with tests into t/ subdir for beginning
+      tests: index & table create & remove (WIP)
+      added buildtests target utilizing Test::Inline module
+      inline tests for basic FusqlFS initialization, cache interface & file cache added
+      Makefile: buildtests target added
+      added basic inline tests for PgSQL module initialization
+      removed spare tests
+      bail out if pgsql is unaccessable: no duplicate info
+      no connect tests in base FusqlFS module
+      inline role tests implemented
+      Build.PL: generate tests into t, check count set to 2 to try best determining number of tests to run
+      gitignore update: no build specific dirs & files, no autogenerated tests
+      database cleanup dummy test
+      Makefile: autogeneration specific targets
+      inline tests for PgSQL tables module
+      Build.PL: don't create t/auto
+      removed deprecated test Makefile
+      mysql backend package renamed to match common package names conventions
+      added inline test plan for PgSQL::Table::Struct package
+      inline tests for PgSQL::Tables::Data (WIP)
+      avoid loading non scalar values via Interface::load() method: considered already parsed
+      added testcover target into Makefile
+      FusqlFS::Interface renamed to FusqlFS::Artifact
+      Makefile: added lint target to test syntax
+      added inline tests for PgSQL::Table::Indices
+      implemented better inline tests framework
+      turned off print errors & warns if --debug option is unset
+      disabled carps in cache module for now
+      added inline tests for PgSQL::Views module
+      Test framework: set_up() method can force all tests skipped by returning false value
+      added inline tests into PgSQL::Table::Struct module
+      Artifact basic interface methods inline testing
+      Covered edge case with empty strategy in Cache module
+      renamed $testclass to $_tobj
+      use is/isnt instead of ok defined
+      Makefile lint target tests tests as well
+      basic inline tests for PgSQL::Table::Constraints module added (WIP)
+      gitignore update: exclude cover report db
+      added inline tests for PgSQL::Queries + implemented rename for queries
+      added inline tests for PgSQL::Sequences module
+      added inline tests for Cache::Limited module
+      Makefile: lint target renamed to testlint, run it before normal tests
+      Build.PL: depend on B::Lint for building
+      fixed Cache::Limited: FETCH returns undef if entry doesn't exist
+      added stubs for PgSQL::Constraint mutation methods (WIP)
+      moved common code for lazy artifact creation (on store call, not create) into FusqlFS::Artifact::Table::Lazy module
+      PgSQL::Table::Constraints mutators production
+      Makefile: test & testcover targets support T variable to run given test only
+      Artifact::Table::Lazy create method returns true
+      PgSQL::Table::Constraints: implemented mutation methods
+      Version 0.002
+
+
+Changed in v0.0021:
+
+Konstantin Stepanov (20):
+      Build.PL: replace {_tpkg} with currently testing package in tests body
+      Artifact::Table::Lazy: simple deep clone of template in create() method
+      PgSQL::Table::Constraints: fixed constructor inheritance
+      PgSQL::Table::Constraints: better tests for create() method
+      Build.PL: custom test files formatter
+      tests for Cache::Base
+      don't call disconnect on object without disconnect
+      speed up tests by disconnecting main fusqlfs object on tear down
+      PgSQL::Table::Data: return data as single file if no primary key is found
+      remember current dir to correct mount point position in case of demonization (which resets cwd to root)
+      Makefile: mount, umount & remount targets for tests
+      PgSQL::Functions implementation (WIP)
+      fusqlfs: Getopt configured to not ignore options
+      fusqlfs: one of database or mountpoint parameters can be given via options
+      added basic inline tests for PgSQL::Functions
+      fixed incorrect (deprecated) class names
+      show all functions with the same name but with different in/out params, sorted by arguments, result
+      version update
+      MANIFEST.SKIP: exclude log files
+      PgSQL::Functions: don't duplicate functions with the same names
+
+
+Changed in v0.003:
+
+Konstantin Stepanov (25):
+      PgSQL::Table::Constraints: included struct file in creation template
+      gitignore update: distribution files
+      PgSQL::Functions: create/store implemention (WIP)
+      Makefile: added changelog target, updated phony targets list
+      Makefile: major cleanup before dist preparation
+      Makefile: README.pod is autoupdated from fusqlfs
+      PgSQL::Functions: put arguments into names
+      debug option reimplemented
+      Artifact: expose dbh via accessor
+      PgSQL::Role::Owner: support function owners
+      PgSQL::Functions: better Pg 8.3 support, new dir struct
+      PgSQL::Functions: function owner
+      PgSQL::Functions: more info about functions
+      PgSQL::Functions: drop implemented
+      PgSQL::Functions: create supports inplace args
+      PgSQL::Functions: create implemented
+      PgSQL::Functions: rename & store
+      docs update: fixed special chars, TODO update
+      docs update: links in README
+      docs update: better debug options description
+      docs update: fixed terms
+      PgSQL::Functions: more robust checks in store
+      FusqlFS: truncate operates on input cache now
+      docs for FusqlFS & FusqlFS::Abstract (WIP)
+      Version 0.003
+

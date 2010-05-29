@@ -1,6 +1,6 @@
 bin/fusqlfs
 Build.PL
-fusqlfs.log
+Changelog
 lib/FusqlFS.pm
 lib/FusqlFS/Artifact.pm
 lib/FusqlFS/Artifact/Table/Lazy.pm
