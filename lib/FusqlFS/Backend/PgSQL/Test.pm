@@ -2,17 +2,14 @@ use strict;
 use v5.10.0;
 
 package FusqlFS::Backend::PgSQL::Test;
-use base 'Exporter';
-
-use Test::More;
-our @EXPORT = qw(list_ok);
 
 our $fusqlh;
 
 sub dbi_connect
 {
     use DBI;
-    DBI->connect('DBI:Pg:database=postgres', 'postgres', '', { PrintError => 0, PrintWarn => 0 });
+    my $debug = 0;
+    DBI->connect('DBI:Pg:database=postgres', 'postgres', '', { PrintError => $debug, PrintWarn => $debug });
 }
 
 sub set_up
@@ -35,21 +32,6 @@ sub tear_down
     my $dbh = dbi_connect();
     $dbh->do("DROP DATABASE IF EXISTS fusqlfs_test");
     $dbh->disconnect;
-}
-
-sub list_ok
-{
-    my ($list, $expected, $name) = @_;
-    isnt $list, undef, $name;
-    is ref($list), 'ARRAY', $name;
-    if (ref($expected) eq 'CODE')
-    {
-        ok $expected->(@$list), $name;
-    }
-    else
-    {
-        is_deeply $list, $expected, $name;
-    }
 }
 
 1;

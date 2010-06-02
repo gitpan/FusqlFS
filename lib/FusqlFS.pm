@@ -49,10 +49,12 @@ use FusqlFS::Backend;
 
 our $fusqlh;
 our $def_time;
+our $debug;
+our $threaded;
 our %cache;
 our %inbuffer;
 
-our $VERSION = '0.003';
+our $VERSION = '0.004';
 
 =item init
 
@@ -60,19 +62,30 @@ Initializes L<FusqlFS::Backend> and L<FusqlFS::Cache> subsystems, preparing
 all resources to be actually used by L<Fuse> interface.
 
 Input: %options.
+Output: $fusqlfs_instance.
 
 =cut
 sub init
 {
+    my $class = shift;
     my %options = @_;
 
-    $fusqlh = FusqlFS::Backend->new(@_);
+    $threaded = $options{threaded}||0;
+    $debug    = $options{debug}||0;
+    $def_time = mktime(localtime());
+    $fusqlh   = FusqlFS::Backend->new(@_);
     croak "Unable to initialize database backend" unless defined $fusqlh;
 
-    $def_time = mktime(localtime());
+    if ($threaded)
+    {
+        use threads;
+        use threads::shared;
+    }
 
     FusqlFS::Cache->init(\%cache, @options{qw(cache_strategy cache_threshold)});
     $SIG{USR1} = sub () { %cache = (); };
+
+    return $class;
 }
 
 =item mount
@@ -80,18 +93,20 @@ sub init
 Runs fuse main loop, configured with all required hooks and options to
 interface with L<FusqlFS::Backend>.
 
-Input: $mountpoint, %options.
+Input: $mountpoint, $mountopts.
 
 =cut
 sub mount
 {
+    my $class = shift;
     my $mountpoint = shift;
-    my %options = @_;
+    my $mountopts = shift||'';
 
     Fuse::main(
         mountpoint => $mountpoint,
-        mountopts  => $options{'allow_other'}? 'allow_other': '',
-        debug      => ($options{'debug'}||0) > 2,
+        mountopts  => $mountopts,
+        threaded   => $threaded,
+        debug      => $debug > 2,
 
         getdir     => \&getdir,
         getattr    => \&getattr,
@@ -205,8 +220,7 @@ sub truncate
     return -EINVAL() unless $entry->isfile();
     return -EACCES() unless $entry->writable();
 
-    $inbuffer{$path} ||= $entry->get();
-    substr($inbuffer{$path}, $offset, length($inbuffer{$path}), '');
+    $entry->write($offset);
     return 0;
 }
 

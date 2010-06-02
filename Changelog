@@ -314,3 +314,36 @@ Konstantin Stepanov (25):
       docs for FusqlFS & FusqlFS::Abstract (WIP)
       Version 0.003
 
+
+Changed in v0.004:
+
+Konstantin Stepanov (28):
+      FusqlFS: new module interface
+      Standardized file names
+      Makefile: mount target options
+      Removed tabs
+      Implemented --fnsep
+      PgSQL::Table::Data: fixed crash on data select error
+      Makefile: cpan compatible test target
+      Makefile: cpan target
+      PgSQL: some code rewrote shorter
+      Makefile: mount target unmounts first
+      Makefile: tags target (ctags)
+      Makefile: better changelog generation
+      FusqlFS::Languages: basic implementation
+      Build.PL: use Test:Deep for tests
+      PgSQL::Languages: other methods implemented
+      Revert "FusqlFS: truncate operates on input cache now"
+      PgSQL::Table::Triggers: basic implementation
+      PgSQL::Functions: symlink with languages
+      PgSQL::Functions: no "arguments" element in struct
+      Tests: removed list_ok() in preference to cmp_set()
+      PgSQL::Table::Triggers: fixed directory structure
+      PgSQL::Table::Triggers: added documentation stub
+      Build.PL: don't crush if Test::Inline is not installed
+      PgSQL::Table::Triggers: other methods implemented
+      PgSQL::Table::Triggers: basic tests
+      Tests environment: fine control of DBI debug ouput
+      Tests environment: create plperl language & dummy trigger function
+      Version 0.004
+

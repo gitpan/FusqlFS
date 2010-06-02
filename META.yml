@@ -1,6 +1,6 @@
 ---
 name: FusqlFS
-version: 0.003
+version: 0.004
 author:
   - 'Konstantin Stepanov <kstep@p-nut.info>'
 abstract: 'fusqlfs - FUSE file system to mount DB and provide tools to control and admin it'
@@ -9,6 +9,7 @@ resources:
   license: http://opensource.org/licenses/gpl-3.0.html
 build_requires:
   B::Lint: 0
+  Test::Deep: 0
   Test::Inline: 0
   Test::More: 0
 requires:
@@ -32,7 +33,7 @@ configure_requires:
 provides:
   FusqlFS:
     file: lib/FusqlFS.pm
-    version: 0.003
+    version: 0.004
   FusqlFS::Artifact:
     file: lib/FusqlFS/Artifact.pm
   FusqlFS::Artifact::Table::Lazy:
@@ -47,6 +48,8 @@ provides:
     file: lib/FusqlFS/Backend/PgSQL.pm
   FusqlFS::Backend::PgSQL::Functions:
     file: lib/FusqlFS/Backend/PgSQL/Functions.pm
+  FusqlFS::Backend::PgSQL::Languages:
+    file: lib/FusqlFS/Backend/PgSQL/Languages.pm
   FusqlFS::Backend::PgSQL::Queries:
     file: lib/FusqlFS/Backend/PgSQL/Queries.pm
   FusqlFS::Backend::PgSQL::Role::Owned:
@@ -69,6 +72,8 @@ provides:
     file: lib/FusqlFS/Backend/PgSQL/Table/Struct.pm
   FusqlFS::Backend::PgSQL::Table::Test:
     file: lib/FusqlFS/Backend/PgSQL/Table/Test.pm
+  FusqlFS::Backend::PgSQL::Table::Triggers:
+    file: lib/FusqlFS/Backend/PgSQL/Table/Triggers.pm
   FusqlFS::Backend::PgSQL::Tables:
     file: lib/FusqlFS/Backend/PgSQL/Tables.pm
   FusqlFS::Backend::PgSQL::Test:

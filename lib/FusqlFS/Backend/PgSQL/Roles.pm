@@ -32,11 +32,13 @@ our %relkinds = (
     v  => [ qw(VIEW rel) ],
 
     _F => [ qw(FUNCTION pro) ],
+    _L => [ qw(LANGUAGE lan) ],
 );
 
 our %reltables = qw(
     rel pg_class
     pro pg_proc
+    lan pg_language
 );
 
 sub new
@@ -159,16 +161,15 @@ sub get
     my $data = $self->one_row($self->{get_expr}, $name);
     return unless $data;
 
-    my $result = { map { $_ => \"../$_" } @{$data->{contains}} };
+    my $result = { map { $_ => \"../$_" } @{delete($data->{contains})} };
 
-    delete $data->{contains};
     $result->{struct} = $self->dump($data);
     return $result;
 }
 
 =begin testing list
 
-list_ok $_tobj->list(), sub { grep { $_ eq 'postgres' } @_ }, 'Roles list is sane';
+cmp_deeply $_tobj->list(), supersetof('postgres'), 'Roles list is sane';
 
 =end testing
 =cut

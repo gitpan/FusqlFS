@@ -9,6 +9,7 @@ use FusqlFS::Backend::PgSQL::Table::Indices;
 use FusqlFS::Backend::PgSQL::Table::Struct;
 use FusqlFS::Backend::PgSQL::Table::Data;
 use FusqlFS::Backend::PgSQL::Table::Constraints;
+use FusqlFS::Backend::PgSQL::Table::Triggers;
 
 sub new
 {
@@ -26,6 +27,7 @@ sub new
         struct      => new FusqlFS::Backend::PgSQL::Table::Struct(),
         data        => new FusqlFS::Backend::PgSQL::Table::Data(),
         constraints => new FusqlFS::Backend::PgSQL::Table::Constraints(),
+        triggers    => new FusqlFS::Backend::PgSQL::Table::Triggers(),
         owner       => new FusqlFS::Backend::PgSQL::Role::Owner('r', 2),
     };
 
@@ -95,7 +97,7 @@ sub rename
 
 =begin testing list
 
-list_ok $_tobj->list(), [], 'Tables list is sane';
+cmp_set $_tobj->list(), [], 'Tables list is sane';
 
 =end testing
 =cut

@@ -55,7 +55,6 @@ sub new
 
     #CASE WHEN p.proisagg THEN NULL ELSE pg_catalog.pg_get_functiondef(p.oid) END AS struct
     $self->{get_expr} = $class->expr("SELECT $get_func_res AS result,
-                $get_func_args AS arguments,
                 trim(both from p.prosrc) AS content, l.lanname AS lang,
                 CASE p.provolatile WHEN 'i' THEN 'immutable' WHEN 's' THEN 'stable' WHEN 'v' THEN 'volatile' END AS volatility,
                 CASE WHEN p.proisagg THEN 'aggregate' WHEN p.proiswindow THEN 'window' WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN 'trigger' ELSE NULL END AS type
@@ -90,10 +89,8 @@ sub get
     return unless $data;
 
     my $result = {};
-    $result->{'content.'.$data->{lang}} = $data->{content};
-
-    delete $data->{content};
-    delete $data->{lang};
+    $result->{language} = \"../../languages/$data->{lang}";
+    $result->{'content.'.delete($data->{lang})} = delete($data->{content});
     $result->{struct} = $self->dump($data);
 
     $result->{owner} = $self->{owner};
@@ -163,7 +160,6 @@ sub store
 =begin testing rename after create
 
 isnt $_tobj->rename('fusqlfs_func(integer)', 'fusqlfs_func(integer, integer)'), undef;
-$created_func->{struct} =~ s/^arguments: integer$/arguments: 'integer, integer'/m;
 is_deeply $_tobj->get('fusqlfs_func(integer, integer)', $created_func), $created_func;
 is $_tobj->get('fusqlfs_func(integer)'), undef;
 is_deeply $_tobj->list(), [ 'fusqlfs_func(integer, integer)' ];
@@ -215,8 +211,8 @@ __END__
 
 my $created_func = {
     'content.sql' => 'SELECT 1;',
+    'language' => \'../../languages/sql',
     'struct' => '---
-arguments: integer
 result: integer
 type: ~
 volatility: volatile
@@ -226,8 +222,8 @@ volatility: volatile
 
 my $new_func = {
     'content.sql' => 'SELECT $1 | $2;',
+    'language' => \'../../languages/sql',
     'struct' => '---
-arguments: \'integer, integer\'
 result: integer
 type: ~
 volatility: immutable
