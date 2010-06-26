@@ -2,6 +2,7 @@ use strict;
 use v5.10.0;
 
 package FusqlFS::Artifact;
+our $VERSION = "0.005";
 
 =head1 NAME
 
@@ -12,14 +13,11 @@ FusqlFS::Artifact - basic abstract class to represent database artifact in Fusql
     package FusqlFS::Backend::PgSQL::Tables;
     use parent 'FusqlFS::Artifact';
 
-    sub new
+    sub init
     {
-        my $class = shift;
-        my $self = {};
+        my $self = shift;
 
-        // initialize Tables specific resources
-
-        bless $self, $class;
+        # initialize Tables specific resources
     }
 
     sub get
@@ -34,6 +32,34 @@ FusqlFS::Artifact - basic abstract class to represent database artifact in Fusql
         my $self = shift;
         my ($table) = @_;
         return $self->all_col("SELECT id FROM %s %s", [$table, $self->limit]);
+    }
+
+    sub store
+    {
+        my $self = shift;
+        my ($table, $data) = @_;
+        my $row = $self->validate($data, {
+                id    => qr/^\d+$/,
+                -func => '',
+            }) or return;
+
+        my $func = $row->{func}? $row->{func}.'(?)': '?';
+        my $sth = $self->build("UPDATE $table SET ", sub{
+            my ($k, $v) = @_;
+            return " WHERE " unless $k;
+            return " $k = $func ", $row->{$k}, $v;
+        }, %{$self->get_table_fields($table)},
+           '' => '',
+           id => SQL_INTEGER);
+
+        $sth->execute();
+    }
+
+    sub get_table_fields
+    {
+        my $self = shift;
+        my ($table) = @_;
+        # fetches and returns field name => type hashref.
     }
 
 =head1 DESCRIPTION
@@ -54,13 +80,11 @@ For more examples see childrens of this class.
 
 =head1 METHODS
 
-=over
-
 =cut
 
 our $instance;
 
-=item Basic interface methods
+=head2 Abstract interface methods
 
 =begin testing Artifact
 
@@ -80,10 +104,24 @@ foreach my $method (qw(rename drop create store))
 
 =item new
 
-Fallback constructor, shouldn't be called at all.
+Base constructor, shouldn't be overridden in most cases. Use L</init> method to
+initialize object instance.
+
+Override it only if you really know what you do and you have no other way to
+achieve you goal.
 
 Input: $class
 Output: $artifact_instance.
+
+=item init
+
+I<Abstract method> called on object instance (C<$self>) by constructor L</new>
+immediately after instance is created and blessed in order to initialize it.
+
+All parameters given to constructor are passed to this method intact, value
+returned by this method is ignored.
+
+Override this method instead of L</new> in order to initialize your class.
 
 =item get
 
@@ -172,13 +210,89 @@ The method must return any "true" value on success or undef on failure.
 =back
 
 =cut
-sub new { bless {}, $_[0] }
+sub new
+{
+    my $class = shift;
+    my $self  = {};
+
+    bless $self, $class;
+    $self->init(@_);
+
+    return $self;
+}
+sub init { }
 sub get { return '' }
 sub list { return }
 sub rename { return 1 }
 sub drop { return 1 }
 sub create { return 1 }
 sub store { return 1 }
+
+=head2 DBI interface methods
+
+=over
+
+=item dbh
+
+Returns underlayed DBI handler.
+
+Output: $dbh.
+
+=item expr, cexpr
+
+Prepare expression with $dbh->prepare() or $dbh->prepare_cached().
+
+Input: $sql, @sprintf.
+Output: $sth.
+
+If C<@sprintf> is not empty, C<$sql> must be a scalar string with
+L<printf|perlfunc/sprintf FORMAT, LIST >-compatible placeholders, and
+C<sprintf()> will be called to populate this string with values from
+C<@sprintf> array.
+
+The difference between C<expr> and C<cexpr> is the first calls L<DBI/prepare>
+and the second calls L<DBI/prepare_cached>.
+
+=item do, cdo
+
+Prepare and execute expression just like L<DBI/do>.
+
+Input: $sth, @binds or $sql, $sprintf, @binds.
+Output: $result.
+
+Both of them can take either SQL statement as a scalar string or prepared DBI
+statement in place of first argument.
+
+If the first argument is a scalar string, the second argument can be either an
+arrayref or a hashref, and if it is, the string must be
+L<printf|perlfunc/sprintf EXPR, LIST >-compatible format string and
+L</hprintf()> will be used to populate SQL statement with values from second
+argument just like with L<expr|/expr, cexpr>.
+
+C<do> just calls L<DBI/do> and returns success value returned with it,
+while C<cdo> calls L<DBI/prepare_cached> and returns this prepared statement
+in case it was successfully executed, undef otherwise.
+
+=item one_row, all_col, all_row
+
+Executes given statement and returns well formatted result.
+
+Input: $sth, @binds or $sql, $sprintf, @binds.
+Output: $result.
+
+Basicly these methods accept the same arguments (and process them the same way)
+as L<do|/do, cdo>, but return results in format better suited for immediate
+usage.
+
+C<one_row> returns the first row as hashref with field names as keys and field
+values as values. C<all_col> returns arrayref composed from first field values
+from all result rows. C<all_row> returns arrayref composed from hashrefs, where
+each hashref represents data row with field names as keys and field values as
+values.
+
+=back
+
+=cut
 
 sub dbh
 {
@@ -202,7 +316,7 @@ sub cexpr
 sub do
 {
     my ($self, $sql, @binds) = @_;
-    $sql = sprintf($sql, @{shift @binds}) if !ref($sql) && ref($binds[0]);
+    $sql = hprintf($sql, shift @binds) if !ref($sql) && ref($binds[0]);
     $instance->{dbh}->do($sql, {}, @binds);
 }
 
@@ -216,72 +330,275 @@ sub cdo
 sub one_row
 {
     my ($self, $sql, @binds) = @_;
-    $sql = sprintf($sql, @{shift @binds}) if !ref($sql) && ref($binds[0]);
+    $sql = hprintf($sql, shift @binds) if !ref($sql) && ref($binds[0]);
     return $instance->{dbh}->selectrow_hashref($sql, {}, @binds);
 }
 
 sub all_col
 {
     my ($self, $sql, @binds) = @_;
-    $sql = sprintf($sql, @{shift @binds}) if !ref($sql) && ref($binds[0]);
+    $sql = hprintf($sql, shift @binds) if !ref($sql) && ref($binds[0]);
     return $instance->{dbh}->selectcol_arrayref($sql, {}, @binds);
 }
 
 sub all_row
 {
     my ($self, $sql, @binds) = @_;
-    $sql = sprintf($sql, @{shift @binds}) if !ref($sql) && ref($binds[0]);
+    $sql = hprintf($sql, shift @binds) if !ref($sql) && ref($binds[0]);
     return $instance->{dbh}->selectall_arrayref($sql, { Slice => {} }, @binds);
 }
 
+=head2 Data manipulation methods
+
+=over
+
+=item load
+
+Parses input data in configured string format (e.g. YAML, JSON or XML) and
+returns perl structure (hashref or arrayref).
+
+Input: $string_data.
+Output: $parsed_data.
+
+Uses configured parser to deserialize plain string and produce perl structure
+(usually a hashref). In case of parsing failure returns undef.
+
+If C<$string_data> is not a plain string, this method returns this value
+intact, so you can call this method on input data any number of times just to
+make sure they are correct perl structure, not a serialized data.
+
+It is opposite of L</dump>.
+
+=cut
 sub load
 {
     return $_[1] if ref $_[1];
-    return $instance->{loader}->($_[1]);
+    my $data;
+    eval { $data = $instance->{loader}->($_[1]) };
+    return if $@;
+    return $data;
 }
 
+=item validate
+
+Validates input data against a set of simple rules.
+
+Input: $data, $rule, $overrule.
+Output: $validated_data|undef.
+
+A rule can be:
+
+=over
+
+=item Hashref
+
+The input data must be a hashref, every field in from rule's hash must also
+exist in data hash, rule's hash values are subrules to be matched against
+data's hash values. Hash keys with minus as first char are optional.
+
+If input data is a scalar, it will be parsed with standard loader using
+L</load> method, and validation will fail if C<load()> call is.
+
+=item Scalar
+
+Ref of data value must be equal to this rule's value.
+If undef, data value must be simple scalar.
+
+=item Arrayref
+
+Every element in rule's array is a subrule, data value must match
+against all of the subrules.
+
+=item Coderef
+
+A subroutine referenced by the rule's value is called with data value
+as the first argument, it should return processed data if data is correct
+or undef if data is incorrect.
+
+=item Anything else
+
+Data's value must magically match rule's value (with C<~~> operator).
+
+=back
+
+Optional third argument (C<$overrule>) must be a coderef. It will be called with
+$_ locally set to parsed data and must return boolean value. If this value is
+false, then all data is discarded and validation fails, otherwise everything is
+ok.
+
+=cut
+sub validate
+{
+    my $self = shift;
+    my ($data, $rule, $overrule) = @_;
+    return $data unless defined $rule;
+    my $result;
+
+    my $ref = ref $rule;
+    if ($ref eq 'ARRAY') {
+        $result = $data;
+        foreach my $subrule (@$rule)
+        {
+            $result = $self->validate($result, $subrule);
+            return unless defined $result;
+        }
+    } elsif ($ref eq 'CODE') {
+        local $_ = $data;
+        $result = $rule->();
+    } elsif ($ref eq 'HASH') {
+        $result = {};
+        my $struct = ref $data? $data: $self->load($data);
+        return unless ref $struct eq 'HASH';
+        while (my ($field, $subrule) = each %$rule)
+        {
+            my $opt = $field =~ s/^-//;
+            unless (exists($struct->{$field})
+                and defined($result->{$field} = $self->validate($struct->{$field}, $subrule)))
+            {
+                next if $opt;
+                return;
+            }
+        }
+    } elsif ($ref eq '') {
+        return unless ref $data eq $rule;
+        $result = $data;
+    } else {
+        return unless $data ~~ $rule;
+        $result = $data;
+    }
+
+    if ($overrule)
+    {
+        local $_ = $result;
+        return unless $overrule->($data);
+    }
+    return $result;
+}
+
+=item set_of
+
+Helper validation function, creates L</validate> rule to check
+if given value is a set with elements from given variants set.
+
+Input: @variants.
+Output: $rule.
+
+=cut
+sub set_of
+{
+    my (undef, @variants) = @_;
+    return sub {
+        return unless ref $_ eq 'ARRAY';
+        my @items = grep $_ ~~ @variants, keys %{{ map { $_ => 1 } @$_ }};
+        return \@items if scalar(@items) > 0;
+    };
+}
+
+=item dump
+
+Convert perl structure into string of configured format (e.g. YAML, JSON or
+XML).
+
+Input: $data.
+Output: $string.
+
+Uses configured dumper to serialize perl structure into plain scalar string.
+
+It is opposite of L</load>.
+
+=cut
 sub dump
 {
     return $instance->{dumper}->($_[1]) if $_[1];
     return;
 }
 
-sub limit
-{
-    my $limit = $instance->{limit};
-    return $limit? "LIMIT $limit": '';
-}
+=item asplit
 
-sub fnsep
-{
-    return $instance->{fnsep};
-}
+Splits string using configured split character.
 
+Input: $string.
+Output: @chunks.
+
+It is opposite of L</ajoin>.
+
+=cut
 sub asplit
 {
     return split $instance->{fnsplit}, $_[1];
 }
 
+=item ajoin
+
+Joins chunks with configured split character as a glue.
+
+Input: @chunks.
+Output: $string.
+
+It is opposite of L</asplit>.
+
+=cut
 sub ajoin
 {
     shift @_;
     return join $instance->{fnsep}, @_;
 }
 
+=item concat
+
+Produces SQL statement to join given data chunks with configured split
+character as a glue.
+
+Input: @chunks.
+Output: $sql_clause.
+
+It is opposite of L</asplit> (in some sense).
+
+=cut
 sub concat
 {
     shift @_;
     return '"' . join("\" || '$instance->{fnsep}' || \"", @_) . '"';
 }
 
+=item build
+
+Builds SQL statement step by step from given configuration data chunks,
+prepares and binds it afterwards.
+
+Input: $sql, $filter, %iter.
+Output: $sth.
+
+C<$filter> must be a coderef, C<$sql> is a initial SQL statement value to build
+upon and C<%iter> is a series of key-value pairs (normally meant to be field
+value => build config pairs, but it is not carved in stone).
+
+For every key-value pair in C<%iter> C<$filter-E<gt>($key, $value)> is called in
+list context. It must return the next chunk of SQL which will be added to
+resulting SQL statement and an optional bind value to be associated with this
+SQL chunk. This bind value must be either a single bind value or a bind value
+and a configaration parameter for L<DBI/bind_param> (i.e. third argument).
+If C<$filter> returns empty list (or undef, which is the same for list context)
+the iteration is silently skipped and the next pair from C<%iter> is taken.
+
+When C<%iter> is depleted, constructed SQL statement is prepared, all gathered
+bind values are bound to it using C<bind_param()> and the resulting statement
+handler is returned.
+
+So you can use this method to construct complex SQL statements using table
+driven SQL statements construction, producing finely tuned binds with correctly
+typed bind values.
+
+=back
+
+=cut
 sub build
 {
-    my ($self, $sql, $filter, @iter) = @_;
+    my ($self, $sql, $filter, %iter) = @_;
     my (@binds, @bind);
-    foreach (@iter)
+    while (my ($field, $value) = each %iter)
     {
-        local $_ = $_;
-        next unless (@bind) = ($filter->());
+        next unless (@bind) = ($filter->($field, $value));
         $sql .= shift @bind;
         push @binds, [ @bind ] if @bind;
     }
@@ -289,6 +606,103 @@ sub build
     $sql->bind_param($_+1, @{$binds[$_]}) foreach (0..$#binds);
     return $sql;
 }
+
+=item hprintf
+
+I<Static method>. Extended L<sprintf|perlfunc/sprintf FORMAT, LIST > version.
+
+Input: $format, $binds.
+Output: $string.
+
+The C<$format> is the same as for C<sprintf>, C<$binds> is either an arrayref
+or a hashref. If it is an arrayref the result of the method is the same as of
+C<sprintf($format, @$binds)>. If it is a hashref the result is a little
+different.
+
+For hashref C<$binds> all placeholders in C<$format> must be in the form
+of C<%(key)$x>, where C<x> is any C<sprintf> compatible conversion
+and C<key> is the key in the C<%$binds>, so that instead of positional
+placeholders substitution, placeholders in C<$format> are substituted
+with correspondent C<%$binds>' values.
+
+E.g. if you call C<hprintf("%(msg)s: %(count)d\n", { msg =E<gt> 'The counter is',
+count =E<gt> 10 })> you will get the string C<"The counter is: 10\n"> as the
+result. This is really useful if you need to keep formatting strings loosely
+linked with real data inserted into them, e.g. in case of l10n with something
+like gettext.
+
+=cut
+sub hprintf
+{
+    my ($format, $vars) = @_;
+    my @binds;
+
+    if (ref $vars eq 'ARRAY')
+    {
+        @binds = @$vars;        
+    }
+    else
+    {
+        my $i = 0;
+        @binds = map { $format =~ s/\%\($_\)\$/'%'.(++$i).'$'/ge; $vars->{$_} } keys %$vars;
+    }
+    return sprintf($format, @binds);
+}
+
+=item adiff
+
+Get difference between to arrays.
+
+Input: $oldarray, $newarray.
+Output: $newitems, $olditems.
+
+Gets two arrayrefs and returns two arrayrefs with items existing in $arrayref2 only
+(C<$newitems>) and in $arrayref1 only (C<$olditems>).
+
+=cut
+sub adiff
+{
+    my $self = shift;
+    my ($oldarray, $newarray) = @_;
+    my %oldarray = map { $_ => 1 } @$oldarray;
+    my %newarray = map { $_ => 1 } @$newarray;
+    my @newitems = grep !exists $oldarray{$_}, @$newarray;
+    my @olditems = grep !exists $newarray{$_}, @$oldarray;
+    return \@newitems, \@olditems;
+}
+
+=head2 Configuration methods
+
+=over
+
+=item limit
+
+Returns configured C<LIMIT ...> clause or empty string if it's not configured.
+
+Output: $limit_clause.
+
+This method can be used to compose C<SELECT ...> statements according to
+configured limit option.
+
+=cut
+sub limit
+{
+    my $limit = $instance->{limit};
+    return $limit? "LIMIT $limit": '';
+}
+
+=item fnsep
+
+Returns configured split character.
+
+Output: $fnsep.
+
+=cut
+sub fnsep
+{
+    return $instance->{fnsep};
+}
+
 
 1;
 

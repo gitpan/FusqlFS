@@ -25,7 +25,7 @@ max_value: 1000
 min_value: '-10'
 sequence_name: fusqlfs_sequence
 start_value: 1
-}, owner => $_tobj->{owner} };
+}, owner => $_tobj->{owner}, acl => $_tobj->{acl} };
 
 
 #=begin testing get
@@ -63,8 +63,8 @@ max_value: 9223372036854775807
 min_value: 1
 sequence_name: fusqlfs_sequence
 start_value: 1
-}, owner => $_tobj->{owner} };
-is_deeply $_tobj->list(), [ 'fusqlfs_sequence' ]; 
+}, owner => $_tobj->{owner}, acl => $_tobj->{acl} };
+is_deeply $_tobj->list(), [ 'fusqlfs_sequence' ];
 }
 
 

@@ -19,13 +19,12 @@ FusqlFS - FUSE filesystem to work with database via DBI interface
         password => 'pas$w0rd',
         limit    => 100,
         debug    => 2,
+        threaded => 0,
     );
 
     FusqlFS::mount(
         '/path/to/mount/point',
-        mountopts => 'allow_other',
-        debug     => 2,
-        threaded  => 0,
+        'allow_other',
     );
 
 =head1 DESCRIPTION
@@ -54,7 +53,7 @@ our $threaded;
 our %cache;
 our %inbuffer;
 
-our $VERSION = '0.004';
+our $VERSION = "0.005";
 
 =item init
 
@@ -143,7 +142,7 @@ See L<Fuse> for details.
 =cut
 sub getdir
 {
-    
+
     my ($path) = @_;
     my $entry = by_path($path);
     return -ENOENT() unless $entry;
@@ -165,7 +164,7 @@ sub readlink
     my $entry = by_path($path);
     return -ENOENT() unless $entry;
     return -EINVAL() unless $entry->islink();
-    return ${$entry->get()};
+    return $entry->read();
 }
 
 sub read
@@ -199,7 +198,7 @@ sub flush
     return -ENOENT() unless $entry;
 
     flush_inbuffer($path, $entry);
-    clear_cache($path) unless $entry->ispipe();
+    clear_cache($path, $entry->depth()) unless $entry->ispipe();
     return 0;
 }
 
@@ -221,6 +220,7 @@ sub truncate
     return -EACCES() unless $entry->writable();
 
     $entry->write($offset);
+    clear_cache($path, $entry->depth()) unless $entry->ispipe();
     return 0;
 }
 
@@ -233,11 +233,12 @@ sub symlink
     my $origin = by_path($path);
     return -ENOENT() unless $origin;
 
-    my ($tail) = ($path =~ m{/([^/]+)$});
-    my $entry = $fusqlh->by_path($symlink, \$tail);
-    return -EEXIST() unless $entry->get() == \$tail;
+    $path =~ s{^/}{};
+    my $entry = $fusqlh->by_path($symlink, \$path);
+    return -EEXIST() unless $entry->get() == \$path;
 
     $entry->store();
+    say STDERR "depth = ",$entry->depth(), "; height = ", $entry->height();
     clear_cache($symlink, $entry->depth());
     return 0;
 }
@@ -250,8 +251,8 @@ sub unlink
     return -EACCES() unless $entry->writable();
     return -EISDIR() if $entry->isdir();
 
-    $entry->drop();
     clear_cache($path, $entry->depth());
+    $entry->drop();
     return 0;
 }
 
@@ -289,7 +290,7 @@ sub mknod
     return -EEXIST() unless $entry->get() eq '';
 
     $entry->create();
-    clear_cache($path, 1+$entry->depth());
+    clear_cache($path, $entry->depth());
     return 0;
 }
 
@@ -434,10 +435,11 @@ sub clear_cache
     {
         my $key = $_[0];
         my $re = "/[^/]+" x $_[1];
-        $key =~ s{$re$}{};
+        $key =~ s{$re$}{} if $re;
+        my $lk  = length($key);
         while (my $_ = each %cache)
         {
-            next unless /^$key/;
+            next unless substr($_, 0, $lk) eq $key;
             delete $cache{$_};
         }
     }

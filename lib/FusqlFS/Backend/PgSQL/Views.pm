@@ -2,25 +2,65 @@ use strict;
 use v5.10.0;
 
 package FusqlFS::Backend::PgSQL::Views;
+our $VERSION = "0.005";
 use parent 'FusqlFS::Artifact';
-use FusqlFS::Backend::PgSQL::Roles;
 
-sub new
+=head1 NAME
+
+FusqlFS::Backend::PgSQL::Views - FusqlFS PostgreSQL database views interface
+
+=head1 SYNOPSIS
+
+    use FusqlFS::Backend::PgSQL::Views;
+
+    my $views = FusqlFS::Backend::PgSQL::Views->new();
+    my $list = $views->list();
+    $views->create('aview');
+    $views->store('aview', { 'content.sql' => 'SELECT * FROM sometable' });
+    my $view = $views->get('aview');
+
+=head1 DESCRIPTION
+
+This is FusqlFS an interface to PostgreSQL database views. This class is not
+to be used by itself.
+
+See L<FusqlFS::Artifact> for description of interface methods,
+L<FusqlFS::Backend> to learn more on backend initialization and
+L<FusqlFS::Backend::Base> for more info on database backends writing.
+
+=head1 EXPOSED STRUCTURE
+
+=over
+
+=item F<./content.sql>
+
+Plain file with C<SELECT ...> SQL statement used to construct query in it. Can
+be written to redefine view.
+
+=item F<./owner>
+
+Symlink to view's owner in F<../../roles>.
+
+=back
+
+=cut
+
+
+use FusqlFS::Backend::PgSQL::Role::Owner;
+
+sub init
 {
-    my $class = shift;
-    my $self = {};
+    my $self = shift;
 
     $self->{drop_expr} = 'DROP VIEW "%s"';
     $self->{create_expr} = 'CREATE VIEW "%s" AS SELECT 1';
     $self->{store_expr} = 'CREATE OR REPLACE VIEW "%s" AS %s';
     $self->{rename_expr} = 'ALTER VIEW "%s" RENAME TO "%s"';
 
-    $self->{get_expr} = $class->expr("SELECT definition FROM pg_catalog.pg_views WHERE viewname = ?");
-    $self->{list_expr} = $class->expr("SELECT viewname FROM pg_catalog.pg_views WHERE schemaname = 'public'");
+    $self->{get_expr} = $self->expr("SELECT definition FROM pg_catalog.pg_views WHERE viewname = ?");
+    $self->{list_expr} = $self->expr("SELECT viewname FROM pg_catalog.pg_views WHERE schemaname = 'public'");
 
-    $self->{owner} = new FusqlFS::Backend::PgSQL::Role::Owner('v', 2);
-
-    bless $self, $class;
+    $self->{owner} = FusqlFS::Backend::PgSQL::Role::Owner->new('v');
 }
 
 =begin testing list

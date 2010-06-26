@@ -1,17 +1,130 @@
 ---
-name: FusqlFS
-version: 0.004
+abstract: 'fusqlfs - FUSE file system to mount DB and provide tools to control and admin it'
 author:
   - 'Konstantin Stepanov <kstep@p-nut.info>'
-abstract: 'fusqlfs - FUSE file system to mount DB and provide tools to control and admin it'
-license: gpl3
-resources:
-  license: http://opensource.org/licenses/gpl-3.0.html
 build_requires:
   B::Lint: 0
   Test::Deep: 0
   Test::Inline: 0
   Test::More: 0
+configure_requires:
+  Module::Build: 0.36
+generated_by: 'Module::Build version 0.3607'
+license: gpl3
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: FusqlFS
+provides:
+  FusqlFS:
+    file: lib/FusqlFS.pm
+    version: 0.005
+  FusqlFS::Artifact:
+    file: lib/FusqlFS/Artifact.pm
+    version: 0.005
+  FusqlFS::Artifact::Table::Lazy:
+    file: lib/FusqlFS/Artifact/Table/Lazy.pm
+    version: 0.005
+  FusqlFS::Backend:
+    file: lib/FusqlFS/Backend.pm
+    version: 0.005
+  FusqlFS::Backend::Base:
+    file: lib/FusqlFS/Backend/Base.pm
+    version: 0.005
+  FusqlFS::Backend::MySQL:
+    file: lib/FusqlFS/Backend/MySQL.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL:
+    file: lib/FusqlFS/Backend/PgSQL.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Functions:
+    file: lib/FusqlFS/Backend/PgSQL/Functions.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Languages:
+    file: lib/FusqlFS/Backend/PgSQL/Languages.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Queries:
+    file: lib/FusqlFS/Backend/PgSQL/Queries.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Role::Acl:
+    file: lib/FusqlFS/Backend/PgSQL/Role/Acl.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Role::Base:
+    file: lib/FusqlFS/Backend/PgSQL/Role/Base.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Role::Owned:
+    file: lib/FusqlFS/Backend/PgSQL/Role/Owned.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Role::Owner:
+    file: lib/FusqlFS/Backend/PgSQL/Role/Owner.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Roles:
+    file: lib/FusqlFS/Backend/PgSQL/Roles.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Sequences:
+    file: lib/FusqlFS/Backend/PgSQL/Sequences.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Table::Constraints:
+    file: lib/FusqlFS/Backend/PgSQL/Table/Constraints.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Table::Data:
+    file: lib/FusqlFS/Backend/PgSQL/Table/Data.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Table::Indices:
+    file: lib/FusqlFS/Backend/PgSQL/Table/Indices.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Table::Struct:
+    file: lib/FusqlFS/Backend/PgSQL/Table/Struct.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Table::Test:
+    file: lib/FusqlFS/Backend/PgSQL/Table/Test.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Table::Triggers:
+    file: lib/FusqlFS/Backend/PgSQL/Table/Triggers.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Tables:
+    file: lib/FusqlFS/Backend/PgSQL/Tables.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Test:
+    file: lib/FusqlFS/Backend/PgSQL/Test.pm
+    version: 0.005
+  FusqlFS::Backend::PgSQL::Views:
+    file: lib/FusqlFS/Backend/PgSQL/Views.pm
+    version: 0.005
+  FusqlFS::Cache:
+    file: lib/FusqlFS/Cache.pm
+    version: 0.005
+  FusqlFS::Cache::Base:
+    file: lib/FusqlFS/Cache/Base.pm
+    version: 0.005
+  FusqlFS::Cache::File:
+    file: lib/FusqlFS/Cache/File.pm
+    version: 0.005
+  FusqlFS::Cache::File::Record:
+    file: lib/FusqlFS/Cache/File.pm
+    version: 0.005
+  FusqlFS::Cache::Limited:
+    file: lib/FusqlFS/Cache/Limited.pm
+    version: 0.005
+  FusqlFS::Entry:
+    file: lib/FusqlFS/Entry.pm
+    version: 0.005
+  FusqlFS::Entry::Dir:
+    file: lib/FusqlFS/Entry.pm
+    version: 0.005
+  FusqlFS::Entry::File:
+    file: lib/FusqlFS/Entry.pm
+    version: 0.005
+  FusqlFS::Entry::Pipe:
+    file: lib/FusqlFS/Entry.pm
+    version: 0.005
+  FusqlFS::Entry::Symlink:
+    file: lib/FusqlFS/Entry.pm
+    version: 0.005
+recommends:
+  DBD::mysql: 0
+  JSON::Syck: 0
+  XML::Simple: 0
 requires:
   Carp: 0
   Cwd: 0
@@ -24,83 +137,6 @@ requires:
   Pod::Usage: 0
   YAML::Tiny: 0
   perl: 5.010
-recommends:
-  DBD::mysql: 0
-  JSON::Syck: 0
-  XML::Simple: 0
-configure_requires:
-  Module::Build: 0.340201
-provides:
-  FusqlFS:
-    file: lib/FusqlFS.pm
-    version: 0.004
-  FusqlFS::Artifact:
-    file: lib/FusqlFS/Artifact.pm
-  FusqlFS::Artifact::Table::Lazy:
-    file: lib/FusqlFS/Artifact/Table/Lazy.pm
-  FusqlFS::Backend:
-    file: lib/FusqlFS/Backend.pm
-  FusqlFS::Backend::Base:
-    file: lib/FusqlFS/Backend/Base.pm
-  FusqlFS::Backend::MySQL:
-    file: lib/FusqlFS/Backend/MySQL.pm
-  FusqlFS::Backend::PgSQL:
-    file: lib/FusqlFS/Backend/PgSQL.pm
-  FusqlFS::Backend::PgSQL::Functions:
-    file: lib/FusqlFS/Backend/PgSQL/Functions.pm
-  FusqlFS::Backend::PgSQL::Languages:
-    file: lib/FusqlFS/Backend/PgSQL/Languages.pm
-  FusqlFS::Backend::PgSQL::Queries:
-    file: lib/FusqlFS/Backend/PgSQL/Queries.pm
-  FusqlFS::Backend::PgSQL::Role::Owned:
-    file: lib/FusqlFS/Backend/PgSQL/Roles.pm
-  FusqlFS::Backend::PgSQL::Role::Owner:
-    file: lib/FusqlFS/Backend/PgSQL/Roles.pm
-  FusqlFS::Backend::PgSQL::Role::Permissions:
-    file: lib/FusqlFS/Backend/PgSQL/Roles.pm
-  FusqlFS::Backend::PgSQL::Roles:
-    file: lib/FusqlFS/Backend/PgSQL/Roles.pm
-  FusqlFS::Backend::PgSQL::Sequences:
-    file: lib/FusqlFS/Backend/PgSQL/Sequences.pm
-  FusqlFS::Backend::PgSQL::Table::Constraints:
-    file: lib/FusqlFS/Backend/PgSQL/Table/Constraints.pm
-  FusqlFS::Backend::PgSQL::Table::Data:
-    file: lib/FusqlFS/Backend/PgSQL/Table/Data.pm
-  FusqlFS::Backend::PgSQL::Table::Indices:
-    file: lib/FusqlFS/Backend/PgSQL/Table/Indices.pm
-  FusqlFS::Backend::PgSQL::Table::Struct:
-    file: lib/FusqlFS/Backend/PgSQL/Table/Struct.pm
-  FusqlFS::Backend::PgSQL::Table::Test:
-    file: lib/FusqlFS/Backend/PgSQL/Table/Test.pm
-  FusqlFS::Backend::PgSQL::Table::Triggers:
-    file: lib/FusqlFS/Backend/PgSQL/Table/Triggers.pm
-  FusqlFS::Backend::PgSQL::Tables:
-    file: lib/FusqlFS/Backend/PgSQL/Tables.pm
-  FusqlFS::Backend::PgSQL::Test:
-    file: lib/FusqlFS/Backend/PgSQL/Test.pm
-  FusqlFS::Backend::PgSQL::Views:
-    file: lib/FusqlFS/Backend/PgSQL/Views.pm
-  FusqlFS::Cache:
-    file: lib/FusqlFS/Cache.pm
-  FusqlFS::Cache::Base:
-    file: lib/FusqlFS/Cache/Base.pm
-  FusqlFS::Cache::File:
-    file: lib/FusqlFS/Cache/File.pm
-  FusqlFS::Cache::File::Record:
-    file: lib/FusqlFS/Cache/File.pm
-  FusqlFS::Cache::Limited:
-    file: lib/FusqlFS/Cache/Limited.pm
-  FusqlFS::Entry:
-    file: lib/FusqlFS/Entry.pm
-  FusqlFS::Entry::Dir:
-    file: lib/FusqlFS/Entry.pm
-  FusqlFS::Entry::File:
-    file: lib/FusqlFS/Entry.pm
-  FusqlFS::Entry::Pipe:
-    file: lib/FusqlFS/Entry.pm
-  FusqlFS::Entry::Symlink:
-    file: lib/FusqlFS/Entry.pm
-generated_by: Module::Build version 0.340201
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+resources:
+  license: http://opensource.org/licenses/gpl-3.0.html
+version: 0.005

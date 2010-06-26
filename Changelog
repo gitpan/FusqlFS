@@ -347,3 +347,73 @@ Konstantin Stepanov (28):
       Tests environment: create plperl language & dummy trigger function
       Version 0.004
 
+
+Changed in v0.005:
+
+Konstantin Stepanov (65):
+      Artifact: added simple validation framework
+      PgSQL::Table::Triggers: fixed template
+      gitignore update: ignore debian subdir
+      Artifact: simplified build() call
+      Tests: create dummy trigger function correctly
+      MANIFEST.SKIP update
+      gitignore update: ignore MYMETA.yml
+      Makefile: remove MYMETA.yml on realclean
+      FusqlFS: symlink() passes full target path to backend
+      PgSQL: symlinked paths are absolute
+      Backend: use absolute symlinks
+      More cache cleanups
+      Version 0.0041
+      Removed depth from PgSQL::Role::Owner
+      FusqlFS::Artifact: documentation
+      PgSQL::Table::Indices: removed spare branching
+      Artifact::Table::Lazy: documentation
+      Artifact::Table::Lazy: implemented store()
+      Entry: documentation
+      Entry: simplification
+      Removed trailing spaces
+      Backend::Base: documentation
+      Cache: documentation
+      Cache strategies documentation updated
+      PgSQL::Tables: documentation
+      PgSQL: first level packages documentation
+      PgSQL::Role::Owner: moved the package into separate file
+      Artifact: hprintf function
+      FusqlFS: updated synopsis according new interface
+      FusqlFS: fixed bug in cache deep cleanup
+      FusqlFS: better cache cleanup
+      PgSQL::Role::Owner: documentation
+      PgSQL::Role::Permissions: moved into separate file
+      PgSQL::Role::Permissions: basic implementation
+      Artifact: adiff function
+      PgSQL::Roles: rewrote store() in a more secure way
+      PgSQL::Tables: plugged in permissions module
+      PgSQL::Role::Permissions: turned permissions from inside out
+      PgSQL::Role::Permissions: documentation
+      renamed PgSQL::Role::Permissions to PgSQL::Role::Acl
+      PgSQL::Sequences: typo in doc fixed
+      PgSQL::Sequences: plugged in Acl module
+      PgSQL::Tables: docs updated
+      PgSQL::Role::Acl: usage perm char fixed
+      PgSQL::Functions: plugged in acl module
+      PgSQL::Role::Acl: execute perm char fixed
+      PgSQL::Role::Acl: function names handling
+      PgSQL::Role::Acl: special default role '%' handling
+      PgSQL::Role::Acl: use "my @list = reverse @_;" idiom
+      PgSQL::Role::Acl: rename implemented
+      PgSQL::Role::Acl: better SQL standard compliance
+      PgSQL::Role::Acl: special 'public' role handling
+      PgSQL::Role::Acl: updated acl map data
+      PgSQL::Role::Owned: documentation
+      PgSQL::Role::Base: abstract complexity
+      PgSQL::Role::Owned: implementation
+      PgSQL::Roles: plugged in PgSQL::Role::Owned module
+      PgSQL::Role:*: correct handling of functions
+      Separated initialization method from constructor
+      PgSQL::Role::Base: renamed parameter `kindc' to `filter'
+      PgSQL::Role::Base: documentation update & code cleanup
+      PgSQL::Role*: fixed incorrect validate() rules
+      Artifact: validate(): optional keys keep undefs on validation fail
+      FusqlFS: fixed incorrect cache cleanup
+      Version 0.005
+

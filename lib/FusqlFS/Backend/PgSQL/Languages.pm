@@ -56,9 +56,10 @@ Synlink to language owner role in F<../../roles>.
 =cut
 
 package FusqlFS::Backend::PgSQL::Languages;
+our $VERSION = "0.005";
 use parent 'FusqlFS::Artifact';
 
-use FusqlFS::Backend::PgSQL::Roles;
+use FusqlFS::Backend::PgSQL::Role::Owner;
 
 =item new
 
@@ -73,27 +74,24 @@ isa_ok $instance, $_tcls;
 
 =end testing
 =cut
-sub new
+sub init
 {
-    my $class = shift;
-    my $self = {};
+    my $self = shift;
 
-    $self->{get_expr} = $class->expr('SELECT l.lanispl AS ispl, l.lanpltrusted AS trusted,
+    $self->{get_expr} = $self->expr('SELECT l.lanispl AS ispl, l.lanpltrusted AS trusted,
             hp.proname||\'(\'||pg_catalog.pg_get_function_arguments(hp.oid)||\')\' AS handler,
             vp.proname||\'(\'||pg_catalog.pg_get_function_arguments(vp.oid)||\')\' AS validator
         FROM pg_catalog.pg_language AS l
             LEFT JOIN pg_catalog.pg_proc AS hp ON (l.lanplcallfoid = hp.oid)
             LEFT JOIN pg_catalog.pg_proc AS vp ON (l.lanvalidator = vp.oid)
         WHERE lanname = ?');
-    $self->{list_expr} = $class->expr('SELECT lanname FROM pg_catalog.pg_language');
+    $self->{list_expr} = $self->expr('SELECT lanname FROM pg_catalog.pg_language');
 
     $self->{create_expr} = 'CREATE LANGUAGE %s';
     $self->{drop_expr} = 'DROP LANGUAGE %s';
     $self->{rename_expr} = 'ALTER LANGUAGE %s RENAME TO %s';
 
-    $self->{owner} = FusqlFS::Backend::PgSQL::Role::Owner->new('_L', 2);
-
-    bless $self, $class;
+    $self->{owner} = FusqlFS::Backend::PgSQL::Role::Owner->new('_L');
 }
 
 =item get
@@ -104,7 +102,7 @@ is $_tobj->get('xxxxxx'), undef;
 my $data = $_tobj->get('internal');
 is_deeply $data, {
     owner => $_tobj->{owner},
-    validator => \"../../functions/fmgr_internal_validator(oid)",
+    validator => \"functions/fmgr_internal_validator(oid)",
     struct => '---
 ispl: 0
 trusted: 0
@@ -121,8 +119,8 @@ sub get
     return unless $data;
 
     my $result = {};
-    $result->{handler}   = \"../../functions/$data->{handler}"   if $data->{handler};
-    $result->{validator} = \"../../functions/$data->{validator}" if $data->{validator};
+    $result->{handler}   = \"functions/$data->{handler}"   if $data->{handler};
+    $result->{validator} = \"functions/$data->{validator}" if $data->{validator};
     delete $data->{handler};
     delete $data->{validator};
 
@@ -213,17 +211,21 @@ sub store
 {
     my $self = shift;
     my ($name, $data) = @_;
-    my $struct = $self->load($data->{struct});
+	return unless $data;
 
-    my $trusted = $struct->{trusted}? 'TRUSTED ': '';
+    my $struct = $self->validate($data, {
+		-validator => ['SCALAR', sub { $$_ =~ /^functions\/(\S+)\(.*\)$/ && $1 }],
+		-handler   => ['SCALAR', sub { $$_ =~ /^functions\/(\S+)\(.*\)$/ && $1 }],
+		struct    => {
+			trusted => '',
+			ispl    => '',
+		}
+	}, sub{ exists $_->{validator} || exists $_->{handler} })
+        or return;
+
+    my $trusted = $struct->{struct}->{trusted}? 'TRUSTED ': '';
     my $sql = "CREATE ${trusted}LANGUAGE $name";
-
-    foreach (qw(handler validator))
-    {
-        next unless $data->{$_};
-        my ($func) = split /\(/, $data->{$_}, 2;
-        $sql .= ' '.uc($_).' '.$func;
-    }
+    $sql .= ' '.uc($_).' '.$struct->{$_} foreach (qw(handler validator));
 
     $self->drop($name) and $self->do($sql);
 }
@@ -240,8 +242,8 @@ __END__
 
 my $new_lang = {
     owner     => $_tobj->{owner},
-    handler   => \"../../functions/plperl_call_handler()",
-    validator => \"../../functions/plperl_validator(oid)",
+    handler   => \"functions/plperl_call_handler()",
+    validator => \"functions/plperl_validator(oid)",
     struct    => '---
 ispl: 1
 trusted: 1

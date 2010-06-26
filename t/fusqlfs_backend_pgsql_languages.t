@@ -16,8 +16,8 @@ our $_tcls = 'FusqlFS::Backend::PgSQL::Languages';
 
 my $new_lang = {
     owner     => $_tobj->{owner},
-    handler   => \"../../functions/plperl_call_handler()",
-    validator => \"../../functions/plperl_validator(oid)",
+    handler   => \"functions/plperl_call_handler()",
+    validator => \"functions/plperl_validator(oid)",
     struct    => '---
 ispl: 1
 trusted: 1
@@ -34,7 +34,7 @@ is $_tobj->get('xxxxxx'), undef;
 my $data = $_tobj->get('internal');
 is_deeply $data, {
     owner => $_tobj->{owner},
-    validator => \"../../functions/fmgr_internal_validator(oid)",
+    validator => \"functions/fmgr_internal_validator(oid)",
     struct => '---
 ispl: 0
 trusted: 0

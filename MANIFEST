@@ -11,6 +11,10 @@ lib/FusqlFS/Backend/PgSQL.pm
 lib/FusqlFS/Backend/PgSQL/Functions.pm
 lib/FusqlFS/Backend/PgSQL/Languages.pm
 lib/FusqlFS/Backend/PgSQL/Queries.pm
+lib/FusqlFS/Backend/PgSQL/Role/Acl.pm
+lib/FusqlFS/Backend/PgSQL/Role/Base.pm
+lib/FusqlFS/Backend/PgSQL/Role/Owned.pm
+lib/FusqlFS/Backend/PgSQL/Role/Owner.pm
 lib/FusqlFS/Backend/PgSQL/Roles.pm
 lib/FusqlFS/Backend/PgSQL/Sequences.pm
 lib/FusqlFS/Backend/PgSQL/Table/Constraints.pm

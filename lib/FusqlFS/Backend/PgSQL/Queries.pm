@@ -2,14 +2,8 @@ use strict;
 use v5.10.0;
 
 package FusqlFS::Backend::PgSQL::Queries;
+our $VERSION = "0.005";
 use parent 'FusqlFS::Artifact';
-
-sub new
-{
-    my $class = shift;
-    my $self = {};
-    bless $self, $class;
-}
 
 =begin testing get
 

@@ -16,24 +16,26 @@ our $_tcls = 'FusqlFS::Backend::PgSQL::Functions';
 
 my $created_func = {
     'content.sql' => 'SELECT 1;',
-    'language' => \'../../languages/sql',
+    'language' => \'languages/sql',
     'struct' => '---
 result: integer
-type: ~
+type: normal
 volatility: volatile
 ',
     'owner' => $_tobj->{owner},
+    'acl' => $_tobj->{acl},
 };
 
 my $new_func = {
     'content.sql' => 'SELECT $1 | $2;',
-    'language' => \'../../languages/sql',
+    'language' => \'languages/sql',
     'struct' => '---
 result: integer
-type: ~
+type: normal
 volatility: immutable
 ',
     'owner' => $_tobj->{owner},
+    'acl' => $_tobj->{acl},
 };
 
 

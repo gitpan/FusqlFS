@@ -26,7 +26,8 @@ inherit: 0
 superuser: 1
 valid_until: '2010-01-01 00:00:00+02'
 },
-    postgres => \"../postgres",
+    postgres => \"roles/postgres",
+    owned => $_tobj->{owned},
 };
 
 
@@ -46,7 +47,9 @@ create_role: 1
 inherit: 1
 superuser: 1
 valid_until: ~
-} }, 'Known role is sane';
+},
+owned => $_tobj->{owned},
+}, 'Known role is sane';
 }
 
 

@@ -54,6 +54,7 @@ I<set of insert, update, delete, truncate> list of events trigger will be trigge
 =cut
 
 package FusqlFS::Backend::PgSQL::Table::Triggers;
+our $VERSION = "0.005";
 use parent 'FusqlFS::Artifact::Table::Lazy';
 
 =item new
@@ -69,10 +70,9 @@ isa_ok $triggers, $_tcls;
 
 =end testing
 =cut
-sub new
+sub init
 {
-    my $class = shift;
-    my $self = {};
+    my $self = shift;
 
     # tgtype:
     # 0  1 = for each row
@@ -81,7 +81,7 @@ sub new
     # 3  8 = delete
     # 4 16 = update
     # 5 32 = truncate (?)
-    $self->{get_expr} = $class->expr('SELECT pg_catalog.pg_get_triggerdef(t.oid) AS "create.sql",
+    $self->{get_expr} = $self->expr('SELECT pg_catalog.pg_get_triggerdef(t.oid) AS "create.sql",
             p.proname||\'(\'||pg_catalog.pg_get_function_arguments(p.oid)||\')\' AS handler,
             CASE WHEN (t.tgtype & 1) != 0 THEN \'row\' ELSE \'statement\' END AS for_each,
             CASE WHEN (t.tgtype & 2) != 0 THEN \'before\' ELSE \'after\' END AS when,
@@ -95,7 +95,7 @@ sub new
             LEFT JOIN pg_catalog.pg_class AS r ON (t.tgrelid = r.oid)
             LEFT JOIN pg_catalog.pg_proc AS p ON (t.tgfoid = p.oid)
         WHERE r.relname = ? AND t.tgname = ? AND t.tgconstraint = 0');
-    $self->{list_expr} = $class->expr('SELECT t.tgname FROM pg_catalog.pg_trigger AS t
+    $self->{list_expr} = $self->expr('SELECT t.tgname FROM pg_catalog.pg_trigger AS t
         LEFT JOIN pg_catalog.pg_class AS r ON (t.tgrelid = r.oid) WHERE r.relname = ?');
 
     $self->{rename_expr} = 'ALTER TRIGGER %s ON %s RENAME TO %s';
@@ -103,17 +103,15 @@ sub new
     $self->{store_expr} = 'CREATE TRIGGER %s %s %s ON %s FOR EACH %s EXECUTE PROCEDURE %s';
 
     $self->{template} = {
-        'create.sql' => '---
+        'struct' => '---
 events:
-    - insert
-    - update
-    - delete
+  - insert
+  - update
+  - delete
 for_each: row
 when: before
 ',
     };
-
-    bless $self, $class;
 }
 
 =item get
@@ -139,7 +137,7 @@ sub get
 
         $data->{events} = [ grep $_, @{$data->{events}} ];
 
-        $result->{handler} = \"../../../../functions/$data->{handler}";
+        $result->{handler} = \"functions/$data->{handler}";
         delete $data->{handler};
 
         $result->{'create.sql'} = delete($data->{'create.sql'});
@@ -200,13 +198,21 @@ sub store
 {
     my $self = shift;
     my ($table, $name, $data) = @_;
-    my $struct = $self->load($data->{struct});
+    return unless $data;
 
-    my $when     = uc($struct->{when});
-    my $for_each = uc($struct->{for_each});
-    my $events   = join ' OR ', map { uc $_ } @{$struct->{events}};
-    my $handler  = ${$data->{handler}};
-    $handler =~ s#^\.\./\.\./\.\./\.\./functions/##;
+    my $struct = $self->validate($data, {
+        struct => {
+            when     => qr/^(before|after)$/i,
+            for_each => qr/^(row|statement)$/i,
+            events   => $self->set_of(qw(insert update delete truncate)),
+        },
+        handler => ['SCALAR', sub{ $$_ =~ /^functions\/(\S+\(.*\))$/ && $1 }]
+    }) or return;
+
+    my $when     = uc($struct->{struct}->{when});
+    my $for_each = uc($struct->{struct}->{for_each});
+    my $events   = join ' OR ', map { uc $_ } @{$struct->{struct}->{events}};
+    my $handler  = $struct->{handler};
 
     $self->drop($table, $name) and $self->do($self->{store_expr}, [$name, $when, $events, $table, $for_each, $handler]);
 }
@@ -243,7 +249,7 @@ __END__
 
 my $new_trigger = {
     'create.sql' => 'CREATE TRIGGER fusqlfs_trigger BEFORE INSERT OR UPDATE ON fusqlfs_table FOR EACH ROW EXECUTE PROCEDURE fusqlfs_function()',
-    handler => \'../../../../functions/fusqlfs_function()',
+    handler => \'functions/fusqlfs_function()',
     struct => '---
 events:
   - insert

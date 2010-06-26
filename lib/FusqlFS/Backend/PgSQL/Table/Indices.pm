@@ -2,29 +2,28 @@ use strict;
 use v5.10.0;
 
 package FusqlFS::Backend::PgSQL::Table::Indices;
+our $VERSION = "0.005";
 use parent 'FusqlFS::Artifact::Table::Lazy';
 
 use FusqlFS::Backend::PgSQL::Table::Struct;
 
-sub new
+sub init
 {
-    my $class = shift;
-    my $self = $class->SUPER::new(@_);
+    my $self = shift;
+
     $self->{rename_expr} = 'ALTER INDEX "%s" RENAME TO "%s"';
     $self->{drop_expr} = 'DROP INDEX "%s"';
     $self->{create_expr} = 'CREATE %s INDEX "%s" ON "%s" (%s)';
 
-    $self->{list_expr} = $class->expr("SELECT (SELECT c1.relname FROM pg_catalog.pg_class as c1 WHERE c1.oid = indexrelid) as Index_name
+    $self->{list_expr} = $self->expr("SELECT (SELECT c1.relname FROM pg_catalog.pg_class as c1 WHERE c1.oid = indexrelid) as Index_name
         FROM pg_catalog.pg_index
             WHERE indrelid = (SELECT oid FROM pg_catalog.pg_class as c WHERE c.relname = ? AND relkind = 'r')");
-    $self->{get_expr} = $class->expr("SELECT pg_get_indexdef(indexrelid, 0, true) AS \"create.sql\",
+    $self->{get_expr} = $self->expr("SELECT pg_get_indexdef(indexrelid, 0, true) AS \"create.sql\",
             indisunique as \".unique\", indisprimary as \".primary\", indkey as \".order\"
         FROM pg_catalog.pg_index
             WHERE indexrelid = (SELECT oid FROM pg_catalog.pg_class as c WHERE c.relname = ? AND relkind = 'i')");
 
     $self->{template} = { '.order' => [] };
-
-    bless $self, $class;
 }
 
 =begin testing get
@@ -33,7 +32,7 @@ is_deeply $_tobj->get('fusqlfs_table', 'fusqlfs_table_pkey'), {
     '.primary' => 1,
     '.unique'  => 1,
     '.order'   => [ 'id' ],
-    'id'       => \'../../struct/id',
+    'id'       => \'tables/fusqlfs_table/struct/id',
     'create.sql' => 'CREATE UNIQUE INDEX fusqlfs_table_pkey ON fusqlfs_table USING btree (id)',
 };
 is $_tobj->get('fusqlfs_table', 'fusqlfs_index'), undef;
@@ -53,7 +52,7 @@ sub get
         {
             my @fields = @{FusqlFS::Backend::PgSQL::Table::Struct->new()->list($table)};
             $result->{'.order'} = [ map { $fields[$_-1] } split / /, $result->{'.order'} ];
-            $result->{$_} = \"../../struct/$_" foreach @{$result->{'.order'}};
+            $result->{$_} = \"tables/$table/struct/$_" foreach @{$result->{'.order'}};
         }
         delete $result->{'.unique'} unless $result->{'.unique'};
         delete $result->{'.primary'} unless $result->{'.primary'};
@@ -72,7 +71,7 @@ sub list
     my $self = shift;
     my ($table) = @_;
     my @list = @{$self->SUPER::list($table)};
-    return [ (@{$self->all_col($self->{list_expr}, $table)}, @list) ] || \@list;
+    return [ (@{$self->all_col($self->{list_expr}, $table)}, @list) ];
 }
 
 =begin testing drop after rename
@@ -163,7 +162,7 @@ __END__
 
 #!class FusqlFS::Backend::PgSQL::Table::Test
 
-my $new_index = { 'id' => \'../../struct/id', '.order' => [ 'id' ], '.unique' => 1,
+my $new_index = { 'id' => \'tables/fusqlfs_table/struct/id', '.order' => [ 'id' ], '.unique' => 1,
     'create.sql' => 'CREATE UNIQUE INDEX fusqlfs_index ON fusqlfs_table USING btree (id)' };
 
 =end testing

@@ -2,36 +2,96 @@ use strict;
 use v5.10.0;
 
 package FusqlFS::Backend::PgSQL::Tables;
+our $VERSION = "0.005";
 use parent 'FusqlFS::Artifact';
 
-use FusqlFS::Backend::PgSQL::Roles;
+=head1 NAME
+
+FusqlFS::Backend::PgSQL::Tables - FusqlFS PostgreSQL database tables interface
+
+=head1 SYNOPSIS
+
+    use FusqlFS::Backend::PgSQL::Tables;
+
+    my $tables = FusqlFS::Backend::PgSQL::Tables->new();
+    my $list = $tables->list();
+    $tables->create('sometable');
+    my $table = $tables->get('sometable');
+    $tables->drop('sometable');
+
+=head1 DESCRIPTION
+
+This is FusqlFS an interface to PostgreSQL database tables. This class is not
+to be used by itself.
+
+This class provides a view of a set of different table's artifacts like
+indices, struct (fields description), data rows/records, constraints, triggers
+etc.
+
+See L<FusqlFS::Artifact> for description of interface methods,
+L<FusqlFS::Backend> to learn more on backend initialization and
+L<FusqlFS::Backend::Base> for more info on database backends writing.
+
+=head1 EXPOSED STRUCTURE
+
+=over
+
+=item F<./indices>
+
+Table's indices, see L<FusqlFS::Backend::PgSQL::Table::Indices> for details.
+
+=item F<./struct>
+
+Table's structure, see L<FusqlFS::Backend::PgSQL::Table::Struct> for details.
+
+=item F<./constraints>
+
+Table's constraints, see L<FusqlFS::Backend::PgSQL::Table::Constraints> for details.
+
+=item F<./triggers>
+
+Table's triggers, see L<FusqlFS::Backend::PgSQL::Table::Triggers> for details.
+
+=item F<./owner>
+
+Symlink to table's owner role in F<../../roles>.
+
+=item F<./acl>
+
+Table's ACL with permissions given to different roles. See
+L<FusqlFS::Backend::PgSQL::Role::Acl> for details.
+
+=back
+
+=cut
+
+use FusqlFS::Backend::PgSQL::Role::Owner;
+use FusqlFS::Backend::PgSQL::Role::Acl;
 use FusqlFS::Backend::PgSQL::Table::Indices;
 use FusqlFS::Backend::PgSQL::Table::Struct;
 use FusqlFS::Backend::PgSQL::Table::Data;
 use FusqlFS::Backend::PgSQL::Table::Constraints;
 use FusqlFS::Backend::PgSQL::Table::Triggers;
 
-sub new
+sub init
 {
-    my $class = shift;
-    my $self = {};
+    my $self = shift;
     $self->{rename_expr} = 'ALTER TABLE "%s" RENAME TO "%s"';
     $self->{drop_expr} = 'DROP TABLE "%s"';
     $self->{create_expr} = 'CREATE TABLE "%s" (id serial, PRIMARY KEY (id))';
 
-    $self->{list_expr} = $class->expr("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'");
-    $self->{get_expr} = $class->expr("SELECT 1 FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename = ?");
+    $self->{list_expr} = $self->expr("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'");
+    $self->{get_expr} = $self->expr("SELECT 1 FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename = ?");
 
     $self->{subpackages} = {
-        indices     => new FusqlFS::Backend::PgSQL::Table::Indices(),
-        struct      => new FusqlFS::Backend::PgSQL::Table::Struct(),
-        data        => new FusqlFS::Backend::PgSQL::Table::Data(),
-        constraints => new FusqlFS::Backend::PgSQL::Table::Constraints(),
-        triggers    => new FusqlFS::Backend::PgSQL::Table::Triggers(),
-        owner       => new FusqlFS::Backend::PgSQL::Role::Owner('r', 2),
+        indices     => FusqlFS::Backend::PgSQL::Table::Indices->new(),
+        struct      => FusqlFS::Backend::PgSQL::Table::Struct->new(),
+        data        => FusqlFS::Backend::PgSQL::Table::Data->new(),
+        constraints => FusqlFS::Backend::PgSQL::Table::Constraints->new(),
+        triggers    => FusqlFS::Backend::PgSQL::Table::Triggers->new(),
+        owner       => FusqlFS::Backend::PgSQL::Role::Owner->new('r'),
+        acl         => FusqlFS::Backend::PgSQL::Role::Acl->new('r'),
     };
-
-    bless $self, $class;
 }
 
 =begin testing get

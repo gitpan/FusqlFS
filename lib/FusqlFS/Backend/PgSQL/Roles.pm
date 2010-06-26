@@ -1,94 +1,9 @@
 use strict;
 use v5.10.0;
 
-package FusqlFS::Backend::PgSQL::Role::Permissions;
-use parent 'FusqlFS::Artifact';
-
-sub get
-{
-    my $self = shift;
-    my ($name) = @_;
-    return {
-        tables    => {},
-        views     => {},
-        functions => {},
-    };
-}
-
-sub list
-{
-    return [ qw(tables views functions) ];
-}
-
-1;
-
-package FusqlFS::Backend::PgSQL::Role::Owner;
-use parent 'FusqlFS::Artifact';
-
-our %relkinds = (
-    r  => [ qw(TABLE rel) ],
-    i  => [ qw(INDEX rel) ],
-    S  => [ qw(SEQUENCE rel) ],
-    v  => [ qw(VIEW rel) ],
-
-    _F => [ qw(FUNCTION pro) ],
-    _L => [ qw(LANGUAGE lan) ],
-);
-
-our %reltables = qw(
-    rel pg_class
-    pro pg_proc
-    lan pg_language
-);
-
-sub new
-{
-    my $class = shift;
-    my $relkind = shift;
-    my $depth = 0+shift;
-
-    my ($kind, $rel) = @{$relkinds{$relkind}};
-    my $table = $reltables{$rel};
-    my $kindclause = $table eq 'pg_class'? "AND relkind = '$relkind'": "";
-
-    my $self = {};
-
-    $self->{depth} = '../' x $depth;
-    $self->{get_expr} = $class->expr("SELECT pg_catalog.pg_get_userbyid(${rel}owner) FROM pg_catalog.$table WHERE ${rel}name = ? $kindclause");
-    $self->{store_expr} = "ALTER ${kind} \"%s\" OWNER TO \"%s\"";
-
-    bless $self, $class;
-}
-
-sub get
-{
-    my $self = shift;
-    my $name = pop;
-    $name = $1 if $name =~ /^([a-zA-Z0-9_]+)/;
-    my $owner = $self->all_col($self->{get_expr}, $name);
-    return \"$self->{depth}roles/$owner->[0]" if $owner;
-}
-
-sub store
-{
-    my $self = shift;
-    my $data = pop;
-    my $name = pop;
-    $data = $$data if ref $data eq 'SCALAR';
-    return if ref $data || $data !~ m#^$self->{depth}roles/([^/]+)$#;
-    $self->do($self->{store_expr}, [$name, $1]);
-}
-
-1;
-
-package FusqlFS::Backend::PgSQL::Role::Owned;
-use parent 'FusqlFS::Artifact';
-
-1;
-
 package FusqlFS::Backend::PgSQL::Roles;
+our $VERSION = "0.005";
 use parent 'FusqlFS::Artifact';
-use DBI qw(:sql_types);
 
 =begin testing SETUP
 
@@ -106,19 +21,22 @@ inherit: 0
 superuser: 1
 valid_until: '2010-01-01 00:00:00+02'
 },
-    postgres => \"../postgres",
+    postgres => \"roles/postgres",
+    owned => $_tobj->{owned},
 };
 
 =end testing
 =cut
 
-sub new
-{
-    my $class = shift;
-    my $self = {};
+use DBI qw(:sql_types);
+use FusqlFS::Backend::PgSQL::Role::Owned;
 
-    $self->{list_expr} = $class->expr("SELECT rolname FROM pg_catalog.pg_roles");
-    $self->{get_expr} = $class->expr("SELECT r.rolcanlogin AS can_login, r.rolcatupdate AS cat_update, r.rolconfig AS config,
+sub init
+{
+    my $self = shift;
+
+    $self->{list_expr} = $self->expr("SELECT rolname FROM pg_catalog.pg_roles");
+    $self->{get_expr} = $self->expr("SELECT r.rolcanlogin AS can_login, r.rolcatupdate AS cat_update, r.rolconfig AS config,
             r.rolconnlimit AS conn_limit, r.rolcreatedb AS create_db, r.rolcreaterole AS create_role, r.rolinherit AS inherit,
             r.rolsuper AS superuser, r.rolvaliduntil AS valid_until,
             ARRAY(SELECT b.rolname FROM pg_catalog.pg_roles AS b
@@ -133,7 +51,7 @@ sub new
     $self->{revoke_expr} = 'REVOKE "%s" FROM "%s"';
     $self->{grant_expr} = 'GRANT "%s" TO "%s"';
 
-    bless $self, $class;
+    $self->{owned} = FusqlFS::Backend::PgSQL::Role::Owned->new();
 }
 
 =begin testing get
@@ -149,7 +67,9 @@ create_role: 1
 inherit: 1
 superuser: 1
 valid_until: ~
-} }, 'Known role is sane';
+},
+owned => $_tobj->{owned},
+}, 'Known role is sane';
 
 =end testing
 =cut
@@ -161,9 +81,10 @@ sub get
     my $data = $self->one_row($self->{get_expr}, $name);
     return unless $data;
 
-    my $result = { map { $_ => \"../$_" } @{delete($data->{contains})} };
+    my $result = { map { $_ => \"roles/$_" } @{delete($data->{contains})} };
 
     $result->{struct} = $self->dump($data);
+    $result->{owned}  = $self->{owned};
     return $result;
 }
 
@@ -251,19 +172,32 @@ sub store
 {
     my $self = shift;
     my ($name, $data) = @_;
+    my $struct = $self->validate($data, {
+        struct => {
+            -superuser   => '',
+            -create_db   => '',
+            -create_role => '',
+            -inherit     => '',
+            -can_login   => '',
+            -conn_limit  => qr/^\d+$/,
+            -valid_until => '',
+            -password    => '',
+        },
+    }, sub{
+        $_->{contains} = [ grep ref $data->{$_} eq 'SCALAR', keys %{$_[0]} ];
+        return 1;
+    }) or return;
 
     my $olddata = $self->one_row($self->{get_expr}, $name);
-    my %contains = map { $_ => 1 } @{$olddata->{contains}};
-    my @revoke = grep { !exists $data->{$_} } @{$olddata->{contains}};
-    my @grant = grep { ref $data->{$_} eq 'SCALAR' && !exists $contains{$_} } keys %{$data};
+    my ($grant, $revoke) = $self->adiff($olddata->{contains}, $struct->{contains});
 
-    $self->do($self->{revoke_expr}, [$name, $_]) foreach @revoke;
-    $self->do($self->{grant_expr}, [$name, $_]) foreach @grant;
+    $self->do($self->{revoke_expr}, [$name, $_]) foreach @$revoke;
+    $self->do($self->{grant_expr},  [$name, $_]) foreach @$grant;
 
     $data = $self->load($data->{struct})||{};
 
     my $sth = $self->build("ALTER ROLE \"$name\" ", sub{
-            my ($a, $b) = @$_;
+            my ($a, $b) = @_;
             if (ref $b)
             {
                 return unless $data->{$a};
@@ -274,14 +208,14 @@ sub store
                 return unless exists $data->{$a};
                 return ($data->{$a}? '': 'NO') . "$b ";
             }
-    }, [ superuser   => 'SUPERUSER'  ],
-       [ create_db   => 'CREATEDB'   ],
-       [ create_role => 'CREATEROLE' ],
-       [ inherit     => 'INHERIT'    ],
-       [ can_login   => 'LOGIN'      ],
-       [ conn_limit  => ['CONNECTION LIMIT', SQL_INTEGER] ],
-       [ valid_until => ['VALID UNTIL', SQL_TIMESTAMP]    ],
-       [ password    => ['PASSWORD', SQL_VARCHAR]         ]);
+    }, superuser   => 'SUPERUSER' ,
+       create_db   => 'CREATEDB'  ,
+       create_role => 'CREATEROLE',
+       inherit     => 'INHERIT'   ,
+       can_login   => 'LOGIN'     ,
+       conn_limit  => ['CONNECTION LIMIT', SQL_INTEGER],
+       valid_until => ['VALID UNTIL', SQL_TIMESTAMP]   ,
+       password    => ['PASSWORD', SQL_VARCHAR]        );
 
     $sth->execute();
 }
