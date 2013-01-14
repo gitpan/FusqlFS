@@ -1,8 +1,9 @@
 use strict;
-use v5.10.0;
+use 5.010;
 
 package FusqlFS::Cache::File;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 use parent 'FusqlFS::Cache::Base';
 
 =head1 NAME
@@ -240,7 +241,8 @@ sub cachefile
 1;
 
 package FusqlFS::Cache::File::Record;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 
 =head1 NAME
 

@@ -1,8 +1,9 @@
 use strict;
-use v5.10.0;
+use 5.010;
 
 package FusqlFS::Cache::Limited;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 use parent 'FusqlFS::Cache::Base';
 
 =head1 NAME
@@ -126,7 +127,7 @@ ok exists($cache{'test1'}), 'Most used element exists';
 is $cache{'test1'}, 'value1', 'Most used element is intact';
 ok !exists($cache{'test999'}), 'Least used element doesn\'t exist';
 is $cache{'test999'}, undef, 'Least used element undefined';
-cmp_ok length(%cache), '<=', 10, 'Number of items in cache doesn\'t exceed given threshold';
+cmp_ok length(keys %cache), '<=', 10, 'Number of items in cache doesn\'t exceed given threshold';
 
 while (my ($key, $val) = each %cache)
 {

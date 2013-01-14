@@ -1,8 +1,9 @@
 use strict;
-use v5.10.0;
+use 5.010;
 
 package FusqlFS::Entry;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 
 =head1 NAME
 
@@ -271,7 +272,7 @@ destroyed in process, and target entry becomes identical to original one.
 This method is used in rename fuse hook. It is recommended to construct new
 target entry with defined C<$leaf_absent> argument to L</new>, as this operation
 on already existing entry backed up with real database object can be unpredictable
-or event destructive.
+or even destructive.
 
 =item drop
 
@@ -329,7 +330,7 @@ L<FusqlFS::Artifact/store> method call.
 And that's what this method does.
 
 It returns true if such complex modification/storage process is required and done,
-undef if otherwise.
+undef otherwise.
 
 =cut
 sub put
@@ -462,7 +463,8 @@ sub write { }
 1;
 
 package FusqlFS::Entry::File;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 use parent 'FusqlFS::Entry';
 
 sub isfile { 1 }
@@ -473,7 +475,8 @@ sub read { substr($_[0]->[2], $_[1], $_[2]) }
 1;
 
 package FusqlFS::Entry::Pipe;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 use parent 'FusqlFS::Entry';
 
 sub init
@@ -493,7 +496,8 @@ sub write { $_[0]->[2] = $_[0]->[3]->($_[2]); }
 1;
 
 package FusqlFS::Entry::Dir;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 use parent 'FusqlFS::Entry';
 
 sub init
@@ -510,7 +514,8 @@ sub list { $_[0]->[3] }
 1;
 
 package FusqlFS::Entry::Symlink;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 use parent 'FusqlFS::Entry';
 
 sub init { $_[0]->[3] = ('../' x (scalar(@_)-2)).${$_[0]->[2]} }

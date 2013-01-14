@@ -1,5 +1,5 @@
 use strict;
-use v5.10.0;
+use 5.010;
 
 =head1 NAME
 
@@ -54,7 +54,8 @@ I<set of insert, update, delete, truncate> list of events trigger will be trigge
 =cut
 
 package FusqlFS::Backend::PgSQL::Table::Triggers;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 use parent 'FusqlFS::Artifact::Table::Lazy';
 
 =item new

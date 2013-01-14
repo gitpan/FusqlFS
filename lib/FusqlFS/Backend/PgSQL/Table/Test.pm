@@ -1,8 +1,9 @@
 use strict;
-use v5.10.0;
+use 5.010;
 
 package FusqlFS::Backend::PgSQL::Table::Test;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 use FusqlFS::Backend::PgSQL::Test;
 
 our $fusqlh;

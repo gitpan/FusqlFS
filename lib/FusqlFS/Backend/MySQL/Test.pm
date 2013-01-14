@@ -1,7 +1,7 @@
 use strict;
 use 5.010;
 
-package FusqlFS::Backend::PgSQL::Test;
+package FusqlFS::Backend::MySQL::Test;
 use FusqlFS::Version;
 our $VERSION = $FusqlFS::Version::VERSION;
 
@@ -11,7 +11,7 @@ sub dbi_connect
 {
     use DBI;
     my $debug = 0;
-    DBI->connect('DBI:Pg:database=postgres', 'postgres', '', { PrintError => $debug, PrintWarn => $debug });
+    DBI->connect('DBI:mysql:', 'root', '', { PrintError => $debug, PrintWarn => $debug });
 }
 
 sub set_up
@@ -22,8 +22,8 @@ sub set_up
     return unless $dbh->do("CREATE DATABASE fusqlfs_test");
     $dbh->disconnect;
 
-    use FusqlFS::Backend::PgSQL;
-    $fusqlh = FusqlFS::Backend::PgSQL->new(host => '', port => '', database => 'fusqlfs_test', user => 'postgres', password => '');
+    use FusqlFS::Backend::MySQL;
+    $fusqlh = FusqlFS::Backend::MySQL->new(host => '', port => '', database => 'fusqlfs_test', user => 'root', password => '');
 }
 
 sub tear_down

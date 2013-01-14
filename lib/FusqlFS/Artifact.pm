@@ -1,8 +1,9 @@
 use strict;
-use v5.10.0;
+use 5.010;
 
 package FusqlFS::Artifact;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 
 =head1 NAME
 
@@ -273,7 +274,7 @@ C<do> just calls L<DBI/do> and returns success value returned with it,
 while C<cdo> calls L<DBI/prepare_cached> and returns this prepared statement
 in case it was successfully executed, undef otherwise.
 
-=item one_row, all_col, all_row
+=item one_row, one_col, all_col, all_row
 
 Executes given statement and returns well formatted result.
 
@@ -288,7 +289,8 @@ C<one_row> returns the first row as hashref with field names as keys and field
 values as values. C<all_col> returns arrayref composed from first field values
 from all result rows. C<all_row> returns arrayref composed from hashrefs, where
 each hashref represents data row with field names as keys and field values as
-values.
+values. C<one_col> returns single scalar - the value of first field of first
+record fetched by query.
 
 =back
 
@@ -332,6 +334,14 @@ sub one_row
     my ($self, $sql, @binds) = @_;
     $sql = hprintf($sql, shift @binds) if !ref($sql) && ref($binds[0]);
     return $instance->{dbh}->selectrow_hashref($sql, {}, @binds);
+}
+
+sub one_col
+{
+	my $self = shift;
+	my $cols = $self->all_col(@_);
+	return unless $cols && @$cols;
+	return $cols->[0];
 }
 
 sub all_col
@@ -430,6 +440,16 @@ ok.
 sub validate
 {
     my $self = shift;
+    my $result;
+    eval {
+        $result = $self->_validate(@_);
+    };
+    return if $@;
+    return $result;
+}
+sub _validate
+{
+    my $self = shift;
     my ($data, $rule, $overrule) = @_;
     return $data unless defined $rule;
     my $result;
@@ -440,7 +460,6 @@ sub validate
         foreach my $subrule (@$rule)
         {
             $result = $self->validate($result, $subrule);
-            return unless defined $result;
         }
     } elsif ($ref eq 'CODE') {
         local $_ = $data;
@@ -448,29 +467,28 @@ sub validate
     } elsif ($ref eq 'HASH') {
         $result = {};
         my $struct = ref $data? $data: $self->load($data);
-        return unless ref $struct eq 'HASH';
+        die 'INVALID' unless ref $struct eq 'HASH';
         while (my ($field, $subrule) = each %$rule)
         {
             my $opt = $field =~ s/^-//;
-            unless (exists($struct->{$field})
-                and defined($result->{$field} = $self->validate($struct->{$field}, $subrule)))
-            {
-                next if $opt;
-                return;
-            }
+            eval {
+                die 'INVALID' unless exists $struct->{$field};
+                $result->{$field} = $self->validate($struct->{$field}, $subrule);
+            };
+            die 'INVALID' if $@ and not $opt;
         }
     } elsif ($ref eq '') {
-        return unless ref $data eq $rule;
+        die 'INVALID' unless ref $data eq $rule;
         $result = $data;
     } else {
-        return unless $data ~~ $rule;
+        die 'INVALID' unless $data ~~ $rule;
         $result = $data;
     }
 
     if ($overrule)
     {
         local $_ = $result;
-        return unless $overrule->($data);
+        die 'INVALID' unless $overrule->($data);
     }
     return $result;
 }
@@ -517,15 +535,24 @@ sub dump
 
 Splits string using configured split character.
 
-Input: $string.
+Input: $string, $max_chunks=undef.
 Output: @chunks.
 
-It is opposite of L</ajoin>.
+It is opposite of L</ajoin>. Second optional argument is an integer, and is
+identical to one of C<split>, i.e. sets max number of chunks to split input
+C<$string> into, but it also defines B<minimum> number of chunks as well, so if
+C<$string> contains less than given C<$max_chunks> chunks, the result will be
+padded with C<undef>s to the right up to this number, so output always contain
+C<$max_chunks> elements.
 
 =cut
 sub asplit
 {
-    return split $instance->{fnsplit}, $_[1];
+    my ($self, $string, $max_chunks) = @_;
+    $max_chunks ||= 0;
+    my @result = split $instance->{fnsplit}, $string, $max_chunks;
+    push @result, undef while @result < $max_chunks;
+    return @result;
 }
 
 =item ajoin

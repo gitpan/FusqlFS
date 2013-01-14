@@ -1,8 +1,9 @@
 use strict;
-use v5.10.0;
+use 5.010;
 
 package FusqlFS::Backend::Base;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 use parent 'FusqlFS::Artifact';
 
 =head1 NAME
@@ -70,6 +71,24 @@ file paths are mapped to backend objects and how file type is determined.
 use DBI;
 use FusqlFS::Entry;
 
+our %FORMATTERS = (
+    xml => [
+        'XML/Simple.pm',
+        sub () { XMLout($_[0], NoAttr => 1) },
+        sub () { XMLin($_[0], NoAttr => 1) },
+        ],
+    yaml => [
+        'YAML/Tiny.pm',
+        \&YAML::Tiny::Dump,
+        \&YAML::Tiny::Load,
+        ],
+    json => [
+        'JSON/Syck.pm',
+        \&JSON::Syck::Dump,
+        \&JSON::Syck::Load,
+        ],
+);
+
 =item new
 
 Class constructor.
@@ -96,51 +115,73 @@ sub new
     my $dsn = 'DBI:'.$class->dsn(@options{qw(host port database)});
     my $debug = $options{debug}||0;
     my $fnsep = $options{fnsep}||'.';
+    my $format = $options{format}||'yaml';
     my $self = {
         subpackages => {},
-        limit => 0 + ($options{limit}||0),
-        fnsep => $fnsep,
-        fnsplit => qr/[$fnsep]/,
-        dbh => DBI->connect($dsn, @options{qw(user password)},
-            {
-                PrintError => $debug > 0,
-                PrintWarn  => $debug > 1
-            }),
+        limit       => 0 + ($options{limit}||0),
+        charset     => $options{charset}||'',
+        fnsep       => $fnsep,
+        fnsplit     => qr/[$fnsep]/,
+        connect     => sub () {
+                           DBI->connect($dsn, @options{qw(user password)},
+                           {
+                               PrintError => $debug > 0,
+                               PrintWarn  => $debug > 1
+                           });
+                       },
     };
+    $self->{dbh} = $self->{connect}();
 
-    given ($options{format})
-    {
-        when ('xml')
-        {
-            use XML::Simple;
-            $self->{dumper} = sub () { XMLout($_[0], NoAttr => 1) };
-            $self->{loader} = sub () { XMLin($_[0], NoAttr => 1) };
-        }
-        when ('yaml')
-        {
-            use YAML::Tiny;
-            $self->{dumper} = \&YAML::Tiny::Dump;
-            $self->{loader} = \&YAML::Tiny::Load;
-        }
-        when ('json')
-        {
-            use JSON::Syck;
-            $self->{dumper} = \&JSON::Syck::Dump;
-            $self->{loader} = \&JSON::Syck::Load;
-        }
-        default
-        {
-            use YAML::Tiny;
-            $self->{dumper} = \&YAML::Tiny::Dump;
-            $self->{loader} = \&YAML::Tiny::Load;
-        }
-    }
+    my $formatter = $FORMATTERS{$format} || $FORMATTERS{yaml};
+    require $formatter->[0];
+    $self->{dumper} = $formatter->[1];
+    $self->{loader} = $formatter->[2];
+
+    $self->{namemap} = $options{namemap};
 
     bless $self, $class;
 
     $FusqlFS::Artifact::instance = $self;
     $self->init();
     return $self;
+}
+
+=item connect, disconnect, reconnect
+
+These methods can be used to control database connection in runtime.
+Please use them instead of direct DBH object access via $fusqlh->{dbh},
+as they make some more work, than simple database {dis,re}connection.
+
+They use credentials, provided on first backend object initialization
+with L</new> method above, so no parameters are required.
+
+C<connect> establish new database connection and reinitializes backend.
+Backend reinitialization is required, because some backends make some
+query preparation, linked to current database connection.
+
+C<disconnect> drops database connection, and C<reconnect> drops database
+connection is it's active (checked with L<DBI::ping> method) and
+then establish connection anew. This method is used in C<HUP>
+signal handler to reset database connection.
+
+=cut
+sub connect
+{
+    my $self = shift;
+    $self->{dbh} = $self->{connect}();
+    $self->init();
+}
+
+sub disconnect
+{
+    $_[0]->{dbh}->disconnect();
+}
+
+sub reconnect
+{
+    my $self = shift;
+    $self->disconnect() if $self->{dbh}->ping();
+    $self->connect();
 }
 
 =item by_path

@@ -50,7 +50,7 @@ my $_tcount = undef;
 
 my $list = $_tobj->list();
 isa_ok $list, 'ARRAY';
-cmp_set $list, [ qw(c internal sql) ];
+cmp_set $list, [ qw(c internal sql plpgsql) ];
 }
 
 
@@ -71,7 +71,7 @@ my $_tcount = undef;
 
 isnt $_tobj->create('plperl'), undef;
 is_deeply $_tobj->get('plperl'), $new_lang;
-cmp_set $_tobj->list(), [ qw(c internal sql plperl) ];
+cmp_set $_tobj->list(), [ qw(c internal sql plpgsql plperl) ];
 }
 
 
@@ -91,7 +91,7 @@ my $_tname = 'rename';
 my $_tcount = undef;
 
 isnt $_tobj->rename('plperl', 'plperl1'), undef;
-cmp_set $_tobj->list(), [ qw(c internal sql plperl1) ];
+cmp_set $_tobj->list(), [ qw(c internal sql plpgsql plperl1) ];
 is $_tobj->get('plperl'), undef;
 is_deeply $_tobj->get('plperl1'), $new_lang;
 }
@@ -103,7 +103,7 @@ my $_tname = 'drop';
 my $_tcount = undef;
 
 isnt $_tobj->drop('plperl1'), undef;
-cmp_set $_tobj->list(), [ qw(c internal sql) ];
+cmp_set $_tobj->list(), [ qw(c internal sql plpgsql) ];
 is $_tobj->get('plperl1'), undef;
 }
 

@@ -1,5 +1,5 @@
 use strict;
-use v5.10.0;
+use 5.010;
 
 package FusqlFS;
 
@@ -53,7 +53,8 @@ our $threaded;
 our %cache;
 our %inbuffer;
 
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 
 =item init
 
@@ -72,6 +73,7 @@ sub init
     $threaded = $options{threaded}||0;
     $debug    = $options{debug}||0;
     $def_time = mktime(localtime());
+
     $fusqlh   = FusqlFS::Backend->new(@_);
     croak "Unable to initialize database backend" unless defined $fusqlh;
 
@@ -83,6 +85,7 @@ sub init
 
     FusqlFS::Cache->init(\%cache, @options{qw(cache_strategy cache_threshold)});
     $SIG{USR1} = sub () { %cache = (); };
+    $SIG{HUP} = sub () { %cache = (); $fusqlh->reconnect(); };
 
     return $class;
 }
@@ -100,6 +103,20 @@ sub mount
     my $class = shift;
     my $mountpoint = shift;
     my $mountopts = shift||'';
+
+    my $fusermount = (grep { -f "$_/fusermount" } split /:/, $ENV{PATH})[0] . '/fusermount';
+    if (-x $fusermount) {
+        carp "fusermount found at `$fusermount' and will be used to autounmount when daemon terminated.";
+        $SIG{QUIT} = $SIG{INT} = $SIG{TERM} = sub () {
+            carp "Running `$fusermount' to unmount `$mountpoint'...";
+            chdir '/';
+            $mountpoint =~ s/(['\\])/\\$1/g;
+            system(sprintf(q{fusermount -u -z '%s'}, $mountpoint));
+            exit(0);
+        };
+    } else {
+        carp "fusermount is not found or non-executable, won't autounmount when daemon terminated!";
+    }
 
     Fuse::main(
         mountpoint => $mountpoint,
@@ -128,6 +145,7 @@ sub mount
         fsync      => \&fsync,
         utime      => \&utime,
     );
+
 }
 
 =item Fuse hooks
@@ -251,7 +269,7 @@ sub unlink
     return -EACCES() unless $entry->writable();
     return -EISDIR() if $entry->isdir();
 
-    clear_cache($path, $entry->depth());
+    clear_cache($path, $entry->depth() + 1);
     $entry->drop();
     return 0;
 }

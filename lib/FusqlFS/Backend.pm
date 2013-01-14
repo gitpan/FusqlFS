@@ -1,8 +1,9 @@
 use strict;
-use v5.10.0;
+use 5.010;
 
 package FusqlFS::Backend;
-our $VERSION = "0.005";
+use FusqlFS::Version;
+our $VERSION = $FusqlFS::Version::VERSION;
 
 =head1 NAME
 
@@ -28,28 +29,26 @@ You better look at one of underlying classes for detailed description.
 
 use Carp;
 
-use FusqlFS::Backend::PgSQL;
-use FusqlFS::Backend::MySQL;
+our %Engines = (
+    pgsql => '::PgSQL',
+    mysql => '::MySQL',
+);
 
 sub new
 {
     my $class = shift;
     my %options = @_;
     my $engine = $options{engine};
-    my $subclass = '';
 
-    given (lc $engine)
+    my $subclass = $Engines{lc $engine} || '';
+    if (!$subclass)
     {
-        when ('pgsql') { $subclass = '::PgSQL' }
-        when ('mysql') { $subclass = '::MySQL' }
-        default
-        {
-            carp "Unknown engine `$engine', falling back to default `PgSQL' engine";
-            $subclass = '::PgSQL';
-        }
+        carp "Unknown engine `$engine', falling back to default `PgSQL' engine";
+        $subclass = '::PgSQL';
     }
 
     $class .= $subclass;
+    eval "require $class";
     $class->new(@_);
 }
 

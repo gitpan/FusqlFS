@@ -1,9 +1,10 @@
 #!/usr/bin/perl
 
 use strict;
-use v5.10.0;
+use 5.010;
 
 use Getopt::Long;
+use Getopt::ArgvFile justload => 1;
 use Pod::Usage;
 use Carp;
 use Cwd;
@@ -38,9 +39,11 @@ my %options = (
     'format'          => 'yaml',
     'cache_strategy'  => 'memory',
     'cache_threshold' => 0,
+    'namemap'         => [],
 );
 
 Getopt::Long::Configure('no_ignore_case');
+Getopt::ArgvFile::argvFile(default => 1);
 GetOptions(
     'host|h:s'        => \$options{'host'},
     'port|P:i'        => \$options{'port'},
@@ -60,10 +63,13 @@ GetOptions(
     'cache|c:s'       => \$options{'cache_strategy'},
     'cache-limit|M:i' => \$options{'cache_threshold'},
     'format|f:s'      => \$options{'format'},
+    'namemap|n:s@'    => $options{'namemap'},
 ) or pod2usage(2);
 
 $options{'database'} ||= shift @ARGV;
 $options{'mountpoint'} ||= shift @ARGV;
+
+$options{namemap} = { map { my ($table, $names) = split /:/; $table => [ split /,/, $names ] } @{$options{namemap} || []} };
 
 pod2usage(1) unless !$options{'help'} && $options{'database'} && $options{'mountpoint'};
 
@@ -179,6 +185,39 @@ separator to glue field values together. Defaults to single dot (.). You may
 wish to change it if you have table with text fields in primary key with a dot
 in them.
 
+For tables without primary keys, see L<--namemap|/--namemap, -n> options below.
+
+=item B<--namemap, -n>
+
+Table-to-fields map to format filenames for data rows.
+Normally data records filenames are composed from primary key fields
+concatenated with fields separator (see L<--fnsep|/--fnsep, -s> option
+above). But sometimes you can have tables without primary keys, so
+this algorithm will not work and you won't be able to look inside such
+tables data. To enable data lookup feature for such tables you can
+use B<--namemap> options. This option can be repeated multiple times,
+each B<--namemap> option defines single table-to-fields mapping in format:
+C<tablename:fieldname1,fieldname2,...,fieldnamen>, so this fields list
+will be used for given table instead of primary key fields.
+
+For example there're a lot of tables without primary keys in C<INFORMATION_SCHEMA>
+database of MySQL, but mounting this system database can be very helpful
+to look inside MySQL schema definitions. You can use the following command
+to mount C<INFORMATION_SCHEMA> and be able to review C<TABLES> table
+with tables metadata:
+
+    fusqlfs --engine mysql --host localhost --database information_schema --mountpount ~/mnt/db --namemap TABLES:TABLE_SCHEMA,TABLE_NAME
+
+A few notices: 1) table and field names in these mappings are case sensitive,
+if you put C<--namemap tables:table_schema,table_name> option into command
+above you would end up with empty data directory for C<TABLES> table, 2)
+the field names per table you provide must identify each table row in a
+unique way (i.e. be real primary key, even if not marked so with C<PRIMARY KEY>
+in table definition), otherwise you will get unexpected behavior (for
+instance, you won't be able to edit each row consistently, as what "file"
+you read may not match the "file" you write to, so you can clobber your
+data in no time).
+
 =item B<--limit, -L>
 
 Integer, number of data rows to show in table's data subdir, defaults to 0
@@ -290,6 +329,17 @@ wish to use it as C<--nodeamon> to debug the program.
 
 =back
 
+=head2 Store options into configuration files
+
+FusqlFS leverages L<Getopt::ArgvFile> package to load configuration from files.
+
+Long story short, you can put C<@filename> on command line, it will interpolate
+contents of the file into command line. You can place as many @-clauses into
+command line as you want. This way you can store some common options into a
+file and use it in C<fusqlfs> invocation. For instance, you can place
+credentials and database name into F<databaserc> file and then just call
+C<fusqlfs @databaserc> to mount it.
+
 =head1 DESCRIPTION
 
 This FUSE-daemon allows to mount any DB as a simple filesystem. Unlike other
@@ -319,7 +369,7 @@ it as DB admin tool.
 
 =head1 AUTHOR
 
-E<copy> 2010, Konstantin Stepanov E<lt>I<mailto:kstep@p-nut.info>E<gt>
+E<copy> 2010, Konstantin Stepanov E<lt>I<mailto:me@kstep.me>E<gt>
 
 =head1 LICENSE
 

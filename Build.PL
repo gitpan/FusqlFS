@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use v5.10.0;
+use 5.010;
 
 use Module::Build;
 
@@ -91,10 +91,13 @@ my $build = $class->new(
     license       => 'gpl3',
     dist_author   => 'Konstantin Stepanov <kstep@p-nut.info>',
     dist_abstract => 'fusqlfs - FUSE file system to mount DB and provide tools to control and admin it',
+    dist_version_from => 'lib/FusqlFS/Version.pm',
     requires => {
         'perl'         => '5.010',
 
-        'Getopt::Long' => 0,
+        'Getopt::Long'     => 0,
+        'Getopt::ArgvFile' => 0,
+
         'Pod::Usage'   => 0,
         'Carp'         => 0,
         'Cwd'          => 0,

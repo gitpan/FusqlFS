@@ -1,6 +1,8 @@
 fusqlfs_artifact.t
 fusqlfs_artifact_table_lazy.t
 fusqlfs_backend_base.t
+fusqlfs_backend_mysql_table_struct.t
+fusqlfs_backend_mysql_tables.t
 fusqlfs_backend_pgsql.t
 fusqlfs_backend_pgsql_functions.t
 fusqlfs_backend_pgsql_languages.t
