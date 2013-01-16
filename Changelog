@@ -223,3 +223,74 @@ Konstantin Stepanov (65):
       FusqlFS: fixed incorrect cache cleanup
       Version 0.005
 
+
+Changed in v0.007:
+
+Konstantin Stepanov (66):
+      FusqlFS::Entry: typo in docs fixed
+      Avoid v-string as not so portable thing
+      PgSQL::Table::Data: dot-files don't exist
+      MySQL::Tables: basic methods implemented
+      MySQL::Table:Struct: view table struct
+      MySQL::Table:Struct: create/rename/drop fields
+      MySQL::Table:Struct: change column (WIP)
+      Artifact::validate() now works around native "undef" values correctly
+      Artifact::validate() is exceptions based now
+      MySQL: stub backend modules added
+      Backend::MySQL: basic tables module implementation
+      Artifact: added one_col() method
+      Backend::MySQL: handle charset parameter
+      MySQL::Table::Indices: basic implementation
+      MySQL::Table::Indices: use MySQL 5's extended show statement
+      Artifact: $max_chunks argument added to asplit()
+      MySQL::Table::Indices: mutation implemented
+      dynamic load of chosen backend
+      named MySQL::Table::Struct tests
+      MySQL::Data module
+      reconnect on HUP signal
+      Backend: new connection control methods documented
+      Artifact: abstracted pairs() method to build a set of field pairs for UPDATE/WHERE clauses
+      Make use of new pairs() method + some fixes and make use of placeholders in MySQL background
+      Table-driven configuration for formatters
+      Factored out Backend::*::Table::Data module common parts into Artifact::Table::Data module
+      Clear directory cache on file unlink
+      Backend::MySQL: users package (WIP)
+      Backend::MySQL: rename user method
+      Backend::Base: use require instead of use to load loaders/dumpers in runtime
+      MySQL::Users: fixed query templates
+      Merge branch 'mysql'
+      autounmount on QUIT/INT/TERM signal with fusermount if found
+      MySQL::Users: privileges control implemented
+      FusqlFS: new --namemap option to map tables to field names for tables w/o primary keys
+      MANIFEST.SKIP update
+      Fix documentation links
+      README update
+      MySQL::Table::Triggers module implemented
+      fusqlfs: Getopt::ArgvFile support
+      README update: ArgvFile usage
+      README: author email update
+      Backend::Base: fix minor error (undefined hash key)
+      Tests update to work with new PostgreSQL and Perl
+      FusqlFS::Version package to store common version
+      MySQL::Table::Struct: create.sql
+      SQLite: tables and indices
+      FusqlFS: mkdir/rmdir clear cache deeper
+      FusqlFS::Backend: add sqlite engine into list
+      MySQL::Table::Triggers: some cleanup and fixes
+      Build: add SQLite driver into requirements
+      Build: Pg driver is recommended only now
+      MySQL::Table::Triggers: fix trigger creation
+      MySQL::Procedures implemented
+      PgSQL::Functions: code cleanup
+      MySQL::Functions implemented
+      MySQL validators fix
+      MySQL::Functions, MySQL::Procedures: fixes
+      MySQL::Variables implemented
+      Backend: 'native' format support
+      MySQL::Functions & MySQL::Procedures: fix error on empty parameters
+      Entry: simplify design, table driven subclass resolution
+      MySQL::Variables: support native format
+      SQLite: fixes
+      Entry: fix undefined value error
+      Version 0.007
+

@@ -8,6 +8,9 @@ use parent 'FusqlFS::Backend::Base';
 
 use FusqlFS::Backend::MySQL::Tables;
 use FusqlFS::Backend::MySQL::Users;
+use FusqlFS::Backend::MySQL::Procedures;
+use FusqlFS::Backend::MySQL::Functions;
+use FusqlFS::Backend::MySQL::Variables;
 
 sub init
 {
@@ -19,6 +22,11 @@ sub init
     $self->{subpackages} = {
         tables => new FusqlFS::Backend::MySQL::Tables(),
         users  => new FusqlFS::Backend::MySQL::Users(),
+
+        procedures => new FusqlFS::Backend::MySQL::Procedures(),
+        functions  => new FusqlFS::Backend::MySQL::Functions(),
+
+        variables => new FusqlFS::Backend::MySQL::Variables(),
     };
 }
 

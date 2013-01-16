@@ -1,6 +1,13 @@
 bin/fusqlfs
 Build.PL
 Changelog
+db/tables/moz_cookies/indices/moz_basedomain/rootpage
+db/tables/moz_cookies/indices/moz_basedomain/sql
+db/tables/moz_cookies/indices/sqlite_autoindex_moz_cookies_1/rootpage
+db/tables/moz_cookies/indices/sqlite_autoindex_moz_cookies_1/sql
+db/tables/moz_cookies/rootpage
+db/tables/moz_cookies/sql
+dbrc
 lib/FusqlFS.pm
 lib/FusqlFS/Artifact.pm
 lib/FusqlFS/Artifact/Table/Data.pm
@@ -8,6 +15,9 @@ lib/FusqlFS/Artifact/Table/Lazy.pm
 lib/FusqlFS/Backend.pm
 lib/FusqlFS/Backend/Base.pm
 lib/FusqlFS/Backend/MySQL.pm
+lib/FusqlFS/Backend/MySQL/Events.pm
+lib/FusqlFS/Backend/MySQL/Functions.pm
+lib/FusqlFS/Backend/MySQL/Procedures.pm
 lib/FusqlFS/Backend/MySQL/Role/Acl.pm
 lib/FusqlFS/Backend/MySQL/Role/Owned.pm
 lib/FusqlFS/Backend/MySQL/Role/Owner.pm
@@ -42,6 +52,9 @@ lib/FusqlFS/Backend/PgSQL/Table/Triggers.pm
 lib/FusqlFS/Backend/PgSQL/Tables.pm
 lib/FusqlFS/Backend/PgSQL/Test.pm
 lib/FusqlFS/Backend/PgSQL/Views.pm
+lib/FusqlFS/Backend/SQLite.pm
+lib/FusqlFS/Backend/SQLite/Table/Indices.pm
+lib/FusqlFS/Backend/SQLite/Tables.pm
 lib/FusqlFS/Cache.pm
 lib/FusqlFS/Cache/Base.pm
 lib/FusqlFS/Cache/File.pm
@@ -49,6 +62,7 @@ lib/FusqlFS/Cache/Limited.pm
 lib/FusqlFS/Entry.pm
 lib/FusqlFS/Version.pm
 LICENSE
+lootsiedb
 MANIFEST			This list of files
 MANIFEST.SKIP
 README.pod

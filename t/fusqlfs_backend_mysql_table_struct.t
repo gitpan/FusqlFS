@@ -59,7 +59,7 @@ my $_tname = 'list';
 my $_tcount = undef;
 
 is $_tobj->list('unknown'), undef, 'Unknown table';
-cmp_set $_tobj->list('fusqlfs_table'), ['id'], 'Test table listable';
+cmp_set $_tobj->list('fusqlfs_table'), ['id', 'create.sql'], 'Test table listable';
 }
 
 

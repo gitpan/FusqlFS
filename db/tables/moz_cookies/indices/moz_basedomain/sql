@@ -1,0 +1,1 @@
+CREATE INDEX moz_basedomain ON moz_cookies (baseDomain, appId, inBrowserElement)
