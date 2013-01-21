@@ -14,19 +14,20 @@ isa_ok $_tobj, 'FusqlFS::Backend::MySQL::Table::Struct', 'Class FusqlFS::Backend
 our $_tcls = 'FusqlFS::Backend::MySQL::Table::Struct';
 #!class FusqlFS::Backend::MySQL::Table::Test
 
-my $new_field = q{---
-collation: ~
-comment: ''
-default: 0
-extra: ''
-key: ''
-null: 0
-privileges:
-  - select
-  - insert
-  - update
-  - references
-type: int(11)
+my $new_field = {
+    collation => undef,
+    comment => '',
+    default => 0,
+    extra => '',
+    key => '',
+    null => 0,
+    privileges => [
+        'select',
+        'insert',
+        'update',
+        'references',
+    ],
+    type => 'int(11)',
 };
 
 
@@ -36,19 +37,20 @@ my $_tname = 'get';
 my $_tcount = undef;
 
 is $_tobj->get('fusqlfs_table', 'unknown'), undef, 'Unknown field';
-is $_tobj->get('fusqlfs_table', 'id'), q{---
-collation: ~
-comment: ''
-default: ~
-extra: auto_increment
-key: PRI
-null: 0
-privileges:
-  - select
-  - insert
-  - update
-  - references
-type: int(11)
+is_deeply $_tobj->get('fusqlfs_table', 'id'), {
+    collation => undef,
+    comment => '',
+    default => undef,
+    extra => 'auto_increment',
+    key => 'PRI',
+    null => 0,
+    privileges => [
+        'select',
+        'insert',
+        'update',
+        'references',
+    ],
+    type => 'int(11)',
 }, 'Known field';
 }
 
@@ -69,8 +71,8 @@ my $_tname = 'create';
 my $_tcount = undef;
 
 isnt $_tobj->create('fusqlfs_table', 'field'), undef, 'Create field';
-is $_tobj->get('fusqlfs_table', 'field'), $new_field, 'New field exists';
-is_deeply $_tobj->list('fusqlfs_table'), ['id', 'field'], 'New field is listable';
+is_deeply $_tobj->get('fusqlfs_table', 'field'), $new_field, 'New field exists';
+is_deeply $_tobj->list('fusqlfs_table'), ['id', 'field', 'create.sql'], 'New field is listable';
 }
 
 
@@ -79,12 +81,12 @@ is_deeply $_tobj->list('fusqlfs_table'), ['id', 'field'], 'New field is listable
 my $_tname = 'store';
 my $_tcount = undef;
 
-$new_field =~ s/type: int\(11\)/type: varchar(255)/;
-$new_field =~ s/default: 0/default: ~/;
-$new_field =~ s/collation: ~/collation: utf8_general_ci/;
-$new_field =~ s/null: 0/null: 1/;
+$new_field->{type} = 'varchar(255)';
+$new_field->{default} = undef;
+$new_field->{collation} = 'utf8_general_ci';
+$new_field->{null} = 1;
 isnt $_tobj->store('fusqlfs_table', 'field', $new_field), undef, 'Field changed';
-is $_tobj->get('fusqlfs_table', 'field'), $new_field, 'Field changed correctly';
+is_deeply $_tobj->get('fusqlfs_table', 'field'), $new_field, 'Field changed correctly';
 }
 
 
@@ -95,8 +97,8 @@ my $_tcount = undef;
 
 isnt $_tobj->rename('fusqlfs_table', 'field', 'new_field'), undef, 'Field renamed';
 is $_tobj->get('fusqlfs_table', 'field'), undef, 'New field is unaccessible by old name';
-is $_tobj->get('fusqlfs_table', 'new_field'), $new_field, 'New field exists';
-is_deeply $_tobj->list('fusqlfs_table'), ['id', 'new_field'], 'New field is listable';
+is_deeply $_tobj->get('fusqlfs_table', 'new_field'), $new_field, 'New field exists';
+is_deeply $_tobj->list('fusqlfs_table'), ['id', 'new_field', 'create.sql'], 'New field is listable';
 }
 
 
@@ -107,7 +109,7 @@ my $_tcount = undef;
 
 isnt $_tobj->drop('fusqlfs_table', 'new_field'), undef, 'Field is dropped';
 is $_tobj->get('fusqlfs_table', 'new_field'), undef, 'Field is not gettable';
-is_deeply $_tobj->list('fusqlfs_table'), ['id'], 'Field is not listable';
+is_deeply $_tobj->list('fusqlfs_table'), ['id', 'create.sql'], 'Field is not listable';
 }
 
 FusqlFS::Backend::MySQL::Table::Test->tear_down() if FusqlFS::Backend::MySQL::Table::Test->can('tear_down');

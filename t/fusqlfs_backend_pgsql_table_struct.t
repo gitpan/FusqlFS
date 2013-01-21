@@ -14,12 +14,12 @@ isa_ok $_tobj, 'FusqlFS::Backend::PgSQL::Table::Struct', 'Class FusqlFS::Backend
 our $_tcls = 'FusqlFS::Backend::PgSQL::Table::Struct';
 #!class FusqlFS::Backend::PgSQL::Table::Test
 
-my $new_field = q{---
-default: "''::character varying"
-dimensions: 0
-nullable: 1
-order: 2
-type: 'character varying(255)'
+my $new_field = {
+    default => "''::character varying",
+    dimensions => 0,
+    nullable => 1,
+    order => 2,
+    type => 'character varying(255)',
 };
 
 
@@ -29,12 +29,12 @@ my $_tname = 'get';
 my $_tcount = undef;
 
 is $_tobj->get('fusqlfs_table', 'unknown'), undef;
-is $_tobj->get('fusqlfs_table', 'id'), q{---
-default: "nextval('fusqlfs_table_id_seq'::regclass)"
-dimensions: 0
-nullable: 0
-order: 1
-type: integer
+is_deeply $_tobj->get('fusqlfs_table', 'id'), {
+    default => "nextval('fusqlfs_table_id_seq'::regclass)",
+    dimensions => 0,
+    nullable => 0,
+    order => 1,
+    type => 'integer',
 };
 }
 
@@ -56,12 +56,12 @@ my $_tcount = undef;
 
 isnt $_tobj->create('fusqlfs_table', 'field'), undef;
 is_deeply $_tobj->list('fusqlfs_table'), [ 'id', 'field' ];
-is $_tobj->get('fusqlfs_table', 'field'), q{---
-default: 0
-dimensions: 0
-nullable: 0
-order: 2
-type: integer
+is_deeply $_tobj->get('fusqlfs_table', 'field'), {
+    default => 0,
+    dimensions => 0,
+    nullable => 0,
+    order => 2,
+    type => 'integer',
 };
 }
 
@@ -72,7 +72,7 @@ my $_tname = 'store';
 my $_tcount = undef;
 
 isnt $_tobj->store('fusqlfs_table', 'field', $new_field), undef;
-is $_tobj->get('fusqlfs_table', 'field'), $new_field;
+is_deeply $_tobj->get('fusqlfs_table', 'field'), $new_field;
 }
 
 
@@ -84,7 +84,7 @@ my $_tcount = undef;
 isnt $_tobj->rename('fusqlfs_table', 'field', 'new_field'), undef;
 is_deeply $_tobj->list('fusqlfs_table'), [ 'id', 'new_field' ];
 is $_tobj->get('fusqlfs_table', 'field'), undef;
-is $_tobj->get('fusqlfs_table', 'new_field'), $new_field;
+is_deeply $_tobj->get('fusqlfs_table', 'new_field'), $new_field;
 }
 
 

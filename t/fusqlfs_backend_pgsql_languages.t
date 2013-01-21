@@ -18,10 +18,7 @@ my $new_lang = {
     owner     => $_tobj->{owner},
     handler   => \"functions/plperl_call_handler()",
     validator => \"functions/plperl_validator(oid)",
-    struct    => '---
-ispl: 1
-trusted: 1
-',
+    struct    => { ispl => 1, trusted => 1 },
 };
 
 
@@ -35,10 +32,7 @@ my $data = $_tobj->get('internal');
 is_deeply $data, {
     owner => $_tobj->{owner},
     validator => \"functions/fmgr_internal_validator(oid)",
-    struct => '---
-ispl: 0
-trusted: 0
-',
+    struct => { ispl => 0, trusted => 0, },
 };
 }
 

@@ -104,14 +104,15 @@ sub init
     $self->{store_expr} = 'CREATE TRIGGER %s %s %s ON %s FOR EACH %s EXECUTE PROCEDURE %s';
 
     $self->{template} = {
-        'struct' => '---
-events:
-  - insert
-  - update
-  - delete
-for_each: row
-when: before
-',
+        'struct' => $self->dump({
+            events => [
+                'insert',
+                'update',
+                'delete',
+            ],
+            for_each => 'row',
+            when => 'before',
+        }),
     };
 }
 
@@ -251,13 +252,11 @@ __END__
 my $new_trigger = {
     'create.sql' => 'CREATE TRIGGER fusqlfs_trigger BEFORE INSERT OR UPDATE ON fusqlfs_table FOR EACH ROW EXECUTE PROCEDURE fusqlfs_function()',
     handler => \'functions/fusqlfs_function()',
-    struct => '---
-events:
-  - insert
-  - update
-for_each: row
-when: before
-',
+    struct => {
+        events => [ 'insert', 'update' ],
+        for_each => 'row',
+        when => 'before',
+    },
 };
 
 =end testing

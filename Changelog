@@ -294,3 +294,17 @@ Konstantin Stepanov (66):
       Entry: fix undefined value error
       Version 0.007
 
+
+Changed in v0.008:
+
+Konstantin Stepanov (9):
+      SQLite::Table::Indices: remove excess '1;' from module footer
+      PKGBUILD for ArchLinux
+      FusqlFS::Formatter abstraction for loader/dumper initialization
+      FusqlFS::Formatter subclasses
+      Default output format is native, YAML::Tiny is recommended only
+      README files update to mention new formatters system and new formatters
+      version 0.008
+      Tests update
+      Templates made format agnostic
+

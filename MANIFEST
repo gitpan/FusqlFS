@@ -1,13 +1,6 @@
 bin/fusqlfs
 Build.PL
 Changelog
-db/tables/moz_cookies/indices/moz_basedomain/rootpage
-db/tables/moz_cookies/indices/moz_basedomain/sql
-db/tables/moz_cookies/indices/sqlite_autoindex_moz_cookies_1/rootpage
-db/tables/moz_cookies/indices/sqlite_autoindex_moz_cookies_1/sql
-db/tables/moz_cookies/rootpage
-db/tables/moz_cookies/sql
-dbrc
 lib/FusqlFS.pm
 lib/FusqlFS/Artifact.pm
 lib/FusqlFS/Artifact/Table/Data.pm
@@ -15,7 +8,6 @@ lib/FusqlFS/Artifact/Table/Lazy.pm
 lib/FusqlFS/Backend.pm
 lib/FusqlFS/Backend/Base.pm
 lib/FusqlFS/Backend/MySQL.pm
-lib/FusqlFS/Backend/MySQL/Events.pm
 lib/FusqlFS/Backend/MySQL/Functions.pm
 lib/FusqlFS/Backend/MySQL/Procedures.pm
 lib/FusqlFS/Backend/MySQL/Role/Acl.pm
@@ -60,13 +52,17 @@ lib/FusqlFS/Cache/Base.pm
 lib/FusqlFS/Cache/File.pm
 lib/FusqlFS/Cache/Limited.pm
 lib/FusqlFS/Entry.pm
+lib/FusqlFS/Formatter.pm
+lib/FusqlFS/Formatter/Base.pm
+lib/FusqlFS/Formatter/Html.pm
+lib/FusqlFS/Formatter/Htmltable.pm
+lib/FusqlFS/Formatter/Native.pm
 lib/FusqlFS/Version.pm
 LICENSE
-lootsiedb
 MANIFEST			This list of files
 MANIFEST.SKIP
+PKGBUILD
 README.pod
-sigt.pl
 t/00_env_is_sane.t
 t/fusqlfs_artifact.t
 t/fusqlfs_artifact_table_lazy.t

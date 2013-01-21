@@ -15,17 +15,17 @@ our $_tcls = 'FusqlFS::Backend::PgSQL::Roles';
 #!class FusqlFS::Backend::PgSQL::Test
 
 my $new_role = {
-    struct => q{---
-can_login: 1
-cat_update: 1
-config: ~
-conn_limit: 1
-create_db: 1
-create_role: 1
-inherit: 0
-superuser: 1
-valid_until: '2010-01-01 00:00:00+02'
-},
+    struct => {
+        can_login => 1,
+        cat_update => 1,
+        config => undef,
+        conn_limit => 1,
+        create_db => 1,
+        create_role => 1,
+        inherit => 0,
+        superuser => 1,
+        valid_until => '2010-01-01 00:00:00+02',
+    },
     postgres => \"roles/postgres",
     owned => $_tobj->{owned},
 };
@@ -37,16 +37,16 @@ my $_tname = 'get';
 my $_tcount = undef;
 
 is $_tobj->get('unknown'), undef, 'Unknown role not exists';
-is_deeply $_tobj->get('postgres'), { struct => q{---
-can_login: 1
-cat_update: 1
-config: ~
-conn_limit: '-1'
-create_db: 1
-create_role: 1
-inherit: 1
-superuser: 1
-valid_until: ~
+is_deeply $_tobj->get('postgres'), { struct => {
+    can_login => 1,
+    cat_update => 1,
+    config => undef,
+    conn_limit => '-1',
+    create_db => 1,
+    create_role => 1,
+    inherit => 1,
+    superuser => 1,
+    valid_until => undef,
 },
 owned => $_tobj->{owned},
 }, 'Known role is sane';
@@ -68,16 +68,16 @@ my $_tname = 'create';
 my $_tcount = undef;
 
 isnt $_tobj->create('fusqlfs_test'), undef, 'Role created';
-is $_tobj->get('fusqlfs_test')->{struct}, q{---
-can_login: 0
-cat_update: 0
-config: ~
-conn_limit: '-1'
-create_db: 0
-create_role: 0
-inherit: 1
-superuser: 0
-valid_until: ~
+is_deeply $_tobj->get('fusqlfs_test')->{struct}, {
+    can_login => 0,
+    cat_update => 0,
+    config => undef,
+    conn_limit => '-1',
+    create_db => 0,
+    create_role => 0,
+    inherit => 1,
+    superuser => 0,
+    valid_until => undef,
 }, 'New role is sane';
 
 my $list = $_tobj->list();

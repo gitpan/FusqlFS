@@ -39,9 +39,7 @@ my $_tname = 'create';
 my $_tcount = undef;
 
 ok $_tobj->create('fusqlfs_table', '1');
-is $_tobj->get('fusqlfs_table', '1'), q{---
-id: 1
-};
+is_deeply $_tobj->get('fusqlfs_table', '1'), { id => 1 };
 is_deeply $_tobj->list('fusqlfs_table'), [ 1 ];
 }
 
@@ -53,9 +51,7 @@ my $_tcount = undef;
 
 isnt $_tobj->rename('fusqlfs_table', '1', '2'), undef;
 is $_tobj->get('fusqlfs_table', '1'), undef;
-is $_tobj->get('fusqlfs_table', '2'), q{---
-id: 2
-};
+is_deeply $_tobj->get('fusqlfs_table', '2'), { id => 2 };
 is_deeply $_tobj->list('fusqlfs_table'), [ 2 ];
 }
 

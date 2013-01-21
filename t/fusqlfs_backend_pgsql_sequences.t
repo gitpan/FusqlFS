@@ -14,17 +14,17 @@ isa_ok $_tobj, 'FusqlFS::Backend::PgSQL::Sequences', 'Class FusqlFS::Backend::Pg
 our $_tcls = 'FusqlFS::Backend::PgSQL::Sequences';
 #!class FusqlFS::Backend::PgSQL::Test
 
-my $new_sequence = { struct => q{---
-cache_value: 4
-increment_by: 2
-is_called: 0
-is_cycled: 1
-last_value: 6
-log_cnt: 0
-max_value: 1000
-min_value: '-10'
-sequence_name: fusqlfs_sequence
-start_value: 1
+my $new_sequence = { struct => {
+    cache_value => 4,
+    increment_by => 2,
+    is_called => 0,
+    is_cycled => 1,
+    last_value => 6,
+    log_cnt => 0,
+    max_value => 1000,
+    min_value => '-10',
+    sequence_name => 'fusqlfs_sequence',
+    start_value => 1,
 }, owner => $_tobj->{owner}, acl => $_tobj->{acl} };
 
 
@@ -52,17 +52,17 @@ my $_tname = 'create';
 my $_tcount = undef;
 
 isnt $_tobj->create('fusqlfs_sequence'), undef;
-is_deeply $_tobj->get('fusqlfs_sequence'), { struct => q{---
-cache_value: 1
-increment_by: 1
-is_called: 0
-is_cycled: 0
-last_value: 1
-log_cnt: 0
-max_value: 9223372036854775807
-min_value: 1
-sequence_name: fusqlfs_sequence
-start_value: 1
+is_deeply $_tobj->get('fusqlfs_sequence'), { struct => {
+    cache_value => 1,
+    increment_by => 1,
+    is_called => 0,
+    is_cycled => 0,
+    last_value => 1,
+    log_cnt => 0,
+    max_value => 9223372036854775807,
+    min_value => 1,
+    sequence_name => 'fusqlfs_sequence',
+    start_value => 1,
 }, owner => $_tobj->{owner}, acl => $_tobj->{acl} };
 is_deeply $_tobj->list(), [ 'fusqlfs_sequence' ];
 }
