@@ -25,6 +25,8 @@ This class is a frontend to different data formatters for FusqlFS.
 
 =cut
 
+use Carp;
+
 our %FORMATTERS = (
     xml => [
         'XML/Simple.pm',
@@ -50,22 +52,52 @@ Initialize dumper and loader for given output format.
 Input: $format
 Output: &dumper, &loader
 
+=begin testing init
+
+#!noinst
+my ($dump, $load) = FusqlFS::Formatter->init('native');
+is ref $dump, 'CODE', 'Dumper defined';
+is ref $load, 'CODE', 'Loader defined';
+
+=end testing
 =cut
 sub init
 {
     my $class = shift;
-    my $format = shift;
+    my $format = shift||'yaml';
 
+    my $package;
     my $formatter;
-    if (exists $FORMATTERS{$format}) {
-        $formatter = $FORMATTERS{$format};
-        require $formatter->[0] if $formatter->[0];
-        return $formatter->[1], $formatter->[2];
-    } else {
-        my $package = ucfirst lc $format;
-        require "FusqlFS/Formatter/$package.pm";
-        return eval qq{\\&FusqlFS::Formatter::${package}::Dump}, eval qq{\\&FusqlFS::Formatter::${package}::Load};
+
+    $formatter = $FORMATTERS{$format} || [
+        package_file($package = 'FusqlFS::Formatter::'.ucfirst(lc($format))),
+        eval qq{\\&${package}::Dump},
+        eval qq{\\&${package}::Load},
+    ];
+
+    if ($formatter->[0]) {
+        eval { require $formatter->[0]; };
+        if ($@) {
+            croak "Failed to load native formatter" if ($format eq 'native');
+
+            if ($format eq 'yaml') {
+                carp "Failed to load formatter `yaml', falling back to `native'";
+                return $class->init('native');
+            } else {
+                carp "Failed to load formatter `$format', falling back to `yaml'";
+                return $class->init('yaml');
+            }
+        }
     }
+
+    return $formatter->[1], $formatter->[2];
+}
+
+sub package_file {
+    my $package = shift;
+    $package =~ s{::}{/}g;
+    $package .= '.pm';
+    return $package;
 }
 
 1;

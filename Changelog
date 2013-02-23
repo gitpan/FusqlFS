@@ -308,3 +308,40 @@ Konstantin Stepanov (9):
       Tests update
       Templates made format agnostic
 
+
+Changed in v0.009:
+
+Konstantin Stepanov (32):
+      PKGBUILD: MD5 hash update
+      Build: update author email
+      SQLite::Table::Data implemented
+      SQLite::Struct implemented
+      Artifact::autopackages() method to automate subpackages initialization
+      SQLite::Tables: mutation implemented (TODO: table creation)
+      PgSQL::Tables: fix incorrect autopackages() call context
+      Artifact::autopackages always returns hashref
+      Code format: remove unnecessary `()` from constant subroutines
+      Formatter::Html and Formatter::Htmltable bugfix: incorrect subroutine recursive call
+      Formatters tests closes #15
+      SQLite::Tables: tests and documentation (WIP)
+      Backend::Base: sane error message on connection failure
+      Backend::Base: more verbose error message on connection errors
+      fusqlfs: parse namemap after basic options sanity checks
+      FusqlFS: synposis code fixes
+      Add another debug level to show full stacks
+      Formatter: smart fallback from any to YAML and then to native
+      Add --config option
+      Add --mkdir option
+      Add --rmdir option
+      Move all mkdir/rmdir logic into FusqlFS module, handle signals immediately
+      Remove dir on --rmdir after directory correctly unmounted
+      README update
+      Rename --config option to -r (i.e. 'read')
+      Add debug level to show SQL statements
+      MySQL::Struct: fix setting default to NULL
+      MySQL::Struct: don't put default statement into common column definition
+      MySQL: fix charset default setting
+      Formatter: fix built-in formatter loading
+      Tests: use native formatter
+      Version 0.009
+

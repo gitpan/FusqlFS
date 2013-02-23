@@ -57,7 +57,8 @@ hashref which describes root of fusqlfs subsystem: its keys will be file names,
 and values will be these files' content (well, the values are usually
 L<FusqlFS::Artifact> instances interfacing to different database artifacts, so
 "file" here means not only plain file, but directories, symlinks and
-pseudopipes as well).
+pseudopipes as well). See L<FusqlFS::Artifact/autopackages> for a way to
+automate this process.
 
 See also L<FusqlFS::Entry> to learn how this instance variable is used, how
 file paths are mapped to backend objects and how file type is determined.
@@ -71,6 +72,8 @@ file paths are mapped to backend objects and how file type is determined.
 use DBI;
 use FusqlFS::Entry;
 use FusqlFS::Formatter;
+
+use Carp;
 
 =item new
 
@@ -98,7 +101,9 @@ sub new
     my $dsn = 'DBI:'.$class->dsn(@options{qw(host port database)});
     my $debug = $options{debug}||0;
     my $fnsep = $options{fnsep}||'.';
-    my $format = $options{format}||'native';
+    my $format = $options{format}||'';
+
+    $Carp::Verbose = $debug > 3;
     my $self = {
         subpackages => {},
         limit       => 0 + ($options{limit}||0),
@@ -108,12 +113,15 @@ sub new
         connect     => sub () {
                            DBI->connect($dsn, @options{qw(user password)},
                            {
-                               PrintError => $debug > 0,
-                               PrintWarn  => $debug > 1
-                           });
+                               PrintError  => $debug > 0,
+                               PrintWarn   => $debug > 1,
+                               ShowErrorStatement => $debug > 2,
+                               HandleError => sub { carp(shift); },
+                           }) or die "Failed to connect to $dsn: $DBI::err $DBI::state $DBI::errstr";
                        },
     };
     $self->{dbh} = $self->{connect}();
+
     ($self->{dumper}, $self->{loader}) = FusqlFS::Formatter->init($format);
     $self->{namemap} = $options{namemap};
 
